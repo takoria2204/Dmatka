@@ -145,9 +145,15 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-sm">
-                    Wallet Balance
+                    Deposit Balance
                   </p>
-                  <p className="text-foreground font-bold text-lg">₹0.00</p>
+                  <p className="text-foreground font-bold text-lg">
+                    {loading ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-matka-gold border-t-transparent rounded-full"></div>
+                    ) : (
+                      `₹${walletData?.depositBalance?.toLocaleString() || 0}`
+                    )}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -161,9 +167,15 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-sm">
-                    Total Winnings
+                    Winning Balance
                   </p>
-                  <p className="text-foreground font-bold text-lg">₹0.00</p>
+                  <p className="text-foreground font-bold text-lg">
+                    {loading ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full"></div>
+                    ) : (
+                      `₹${walletData?.winningBalance?.toLocaleString() || 0}`
+                    )}
+                  </p>
                 </div>
               </div>
             </CardContent>
