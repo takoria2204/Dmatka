@@ -155,3 +155,76 @@ export const getWalletStats: RequestHandler = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Submit withdrawal request
+export const submitWithdrawalRequest: RequestHandler = async (req, res) => {
+  try {
+    const userId = (req as any).user._id;
+    const { amount, bankDetails } = req.body;
+
+    // Validate input
+    if (!amount || amount <= 0) {
+      res.status(400).json({ message: "Invalid withdrawal amount" });
+      return;
+    }
+
+    if (
+      !bankDetails ||
+      !bankDetails.bankName ||
+      !bankDetails.accountNumber ||
+      !bankDetails.ifscCode
+    ) {
+      res.status(400).json({ message: "Complete bank details are required" });
+      return;
+    }
+
+    // Check user wallet balance
+    const wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+      res.status(404).json({ message: "Wallet not found" });
+      return;
+    }
+
+    // Check if user has sufficient balance (checking winning balance for withdrawals)
+    if (wallet.winningBalance < amount) {
+      res.status(400).json({
+        message: "Insufficient winning balance for withdrawal",
+        currentBalance: wallet.winningBalance,
+      });
+      return;
+    }
+
+    // Create withdrawal transaction
+    const transaction = new Transaction({
+      userId,
+      type: "withdrawal",
+      amount,
+      status: "pending",
+      description: `Withdrawal request to ${bankDetails.bankName}`,
+      bankDetails: {
+        bankName: bankDetails.bankName,
+        accountNumber: bankDetails.accountNumber,
+        ifscCode: bankDetails.ifscCode,
+        accountHolderName: bankDetails.accountHolderName || bankDetails.name,
+      },
+      balanceAfter: wallet.winningBalance - amount,
+    });
+
+    await transaction.save();
+
+    // Deduct amount from winning balance (hold it until approval)
+    wallet.winningBalance -= amount;
+    await wallet.save();
+
+    await transaction.populate("userId", "fullName mobile email");
+
+    res.status(201).json({
+      success: true,
+      message: "Withdrawal request submitted successfully",
+      data: transaction,
+    });
+  } catch (error) {
+    console.error("Submit withdrawal request error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
