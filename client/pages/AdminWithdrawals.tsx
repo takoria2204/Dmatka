@@ -100,10 +100,9 @@ const AdminWithdrawals = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("admin_token");
-      const url =
-        statusFilter === "all"
-          ? "/api/admin/transactions?type=withdrawal&limit=50"
-          : `/api/admin/transactions?type=withdrawal&status=${statusFilter}&limit=50`;
+      const url = statusFilter === "all"
+        ? "/api/admin/transactions?type=withdrawal&limit=50"
+        : `/api/admin/transactions?type=withdrawal&status=${statusFilter}&limit=50`;
 
       const response = await fetch(url, {
         headers: {
@@ -203,25 +202,32 @@ const AdminWithdrawals = () => {
   };
 
   return (
-    <div className="min-h-screen bg-matka-dark">
+    <div className="min-h-screen bg-[#1a1a1a]">
       {/* Header */}
-      <header className="bg-card/90 backdrop-blur-sm border-b border-border/50">
-        <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Button
-              onClick={() => navigate("/admin/dashboard")}
               variant="ghost"
               size="sm"
-              className="p-2 hover:bg-muted"
+              onClick={() => navigate("/admin/dashboard")}
+              className="text-gray-300 hover:text-white"
             >
-              <ArrowLeft className="h-5 w-5 text-foreground" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
             </Button>
-            <h1 className="text-foreground text-xl font-bold">
+            <h1 className="text-2xl font-bold text-white">
               Withdrawal Management
             </h1>
           </div>
+          <Button
+            onClick={fetchWithdrawals}
+            className="bg-blue-500 text-white hover:bg-blue-600"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
-      </header>
 
       <div className="container mx-auto px-4 py-6">
         {/* Stats Cards */}
