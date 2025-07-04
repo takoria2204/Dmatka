@@ -162,16 +162,29 @@ const Wallet = () => {
       {/* Header */}
       <header className="bg-card/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                onClick={() => navigate("/dashboard")}
+                variant="ghost"
+                size="sm"
+                className="p-2 hover:bg-muted"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </Button>
+              <h1 className="text-foreground text-xl font-bold">Wallet</h1>
+            </div>
             <Button
-              onClick={() => navigate("/dashboard")}
+              onClick={handleRefresh}
               variant="ghost"
               size="sm"
               className="p-2 hover:bg-muted"
+              disabled={refreshing}
             >
-              <ArrowLeft className="h-5 w-5 text-foreground" />
+              <RefreshCw
+                className={`h-5 w-5 text-foreground ${refreshing ? "animate-spin" : ""}`}
+              />
             </Button>
-            <h1 className="text-foreground text-xl font-bold">Wallet</h1>
           </div>
         </div>
       </header>
