@@ -202,8 +202,14 @@ const Dashboard = () => {
                   <Trophy className="h-5 w-5 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm">Games Played</p>
-                  <p className="text-foreground font-bold text-lg">0</p>
+                  <p className="text-muted-foreground text-sm">Total Balance</p>
+                  <p className="text-foreground font-bold text-lg">
+                    {loading ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                    ) : (
+                      `₹${walletData?.balance?.toLocaleString() || 0}`
+                    )}
+                  </p>
                 </div>
               </div>
             </CardContent>
