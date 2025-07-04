@@ -62,6 +62,101 @@ const Wallet = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
+  useEffect(() => {
+    fetchWalletData();
+  }, []);
+
+  const fetchWalletData = async () => {
+    try {
+      const token = localStorage.getItem("matka_token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      setLoading(true);
+      const [walletResponse, depositResponse, statsResponse] =
+        await Promise.all([
+          fetch("/api/wallet/balance", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("/api/wallet/deposit-history?limit=10", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          fetch("/api/wallet/stats", {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+      if (walletResponse.ok) {
+        const walletData = await walletResponse.json();
+        setWalletData(walletData.data);
+      }
+
+      if (depositResponse.ok) {
+        const depositData = await depositResponse.json();
+        setDepositHistory(depositData.data.deposits);
+      }
+
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        setWalletStats(statsData.data);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchWalletData();
+    setRefreshing(false);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "text-green-500 bg-green-500/20";
+      case "pending":
+        return "text-yellow-500 bg-yellow-500/20";
+      case "rejected":
+        return "text-red-500 bg-red-500/20";
+      default:
+        return "text-foreground bg-muted";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "approved":
+        return <CheckCircle className="h-4 w-4" />;
+      case "pending":
+        return <Clock className="h-4 w-4" />;
+      case "rejected":
+        return <AlertCircle className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-matka-dark flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-matka-gold border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-matka-dark">
       {/* Header */}
