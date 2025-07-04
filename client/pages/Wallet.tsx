@@ -1,0 +1,128 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Plus, Minus, History } from "lucide-react";
+
+const Wallet = () => {
+  const navigate = useNavigate();
+  const [walletData] = useState({
+    winningBalance: 0,
+    deposit: 0,
+    bonus: 100,
+    commission: 0,
+  });
+
+  return (
+    <div className="min-h-screen bg-matka-dark">
+      {/* Header */}
+      <header className="bg-card/90 backdrop-blur-sm border-b border-border/50 sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center gap-4">
+            <Button
+              onClick={() => navigate("/dashboard")}
+              variant="ghost"
+              size="sm"
+              className="p-2 hover:bg-muted"
+            >
+              <ArrowLeft className="h-5 w-5 text-foreground" />
+            </Button>
+            <h1 className="text-foreground text-xl font-bold">Wallet</h1>
+          </div>
+        </div>
+      </header>
+
+      <div className="container mx-auto px-4 py-6">
+        {/* Winning Balance Card */}
+        <Card className="bg-card/90 backdrop-blur-sm border-border/50 mb-6">
+          <CardContent className="p-6 text-center">
+            <h2 className="text-muted-foreground text-xl mb-4">
+              Winning Balance
+            </h2>
+            <div className="text-6xl font-bold text-foreground mb-4">
+              ₹{walletData.winningBalance}
+            </div>
+            <div className="inline-flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+              100% Safe & Secure
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Exchange Winning Value Button */}
+        <Button
+          variant="outline"
+          className="w-full mb-6 py-3 text-foreground border-border hover:bg-muted"
+        >
+          Exchange Winning Value
+        </Button>
+
+        {/* Balance Cards */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          <Card className="bg-card/50 backdrop-blur-sm border-border/30">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-foreground mb-2">
+                ₹{walletData.deposit}
+              </div>
+              <p className="text-muted-foreground text-sm">Deposit</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/50 backdrop-blur-sm border-border/30">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-foreground mb-2">
+                ₹{walletData.bonus}
+              </div>
+              <p className="text-muted-foreground text-sm">Bonus</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/50 backdrop-blur-sm border-border/30">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-foreground mb-2">
+                ₹{walletData.commission}
+              </div>
+              <p className="text-muted-foreground text-sm">Commission</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-4 mb-6">
+          <Button
+            onClick={() => navigate("/add-money")}
+            className="flex-1 bg-gradient-to-r from-matka-gold to-yellow-500 text-matka-dark font-bold py-3 hover:from-yellow-500 hover:to-matka-gold transition-all duration-300"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            ADD
+          </Button>
+          <Button
+            onClick={() => navigate("/withdraw")}
+            variant="outline"
+            className="flex-1 border-border text-foreground hover:bg-muted py-3"
+          >
+            <Minus className="h-4 w-4 mr-2" />
+            WITHDRAW
+          </Button>
+        </div>
+
+        {/* Deposit History Button */}
+        <Button
+          variant="outline"
+          className="w-full border-border text-foreground hover:bg-muted py-3 mb-6"
+        >
+          <History className="h-4 w-4 mr-2" />
+          Deposit History
+        </Button>
+
+        {/* Success Message */}
+        <div className="text-center">
+          <p className="text-green-500 text-sm">
+            Updated data fetched successfully
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Wallet;
