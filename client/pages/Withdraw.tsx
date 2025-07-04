@@ -1,10 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft, Wallet, AlertCircle } from "lucide-react";
+
+interface WalletData {
+  balance: number;
+  winningBalance: number;
+  depositBalance: number;
+  bonusBalance: number;
+  commissionBalance: number;
+}
 
 const Withdraw = () => {
   const navigate = useNavigate();
@@ -12,10 +20,12 @@ const Withdraw = () => {
     amount: "",
     bankName: "",
     accountNumber: "",
-    name: "anil",
-    mobile: "+917015242844",
-    ifscCode: "UMB141",
+    accountHolderName: "",
+    ifscCode: "",
   });
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [balanceLoading, setBalanceLoading] = useState(true);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
