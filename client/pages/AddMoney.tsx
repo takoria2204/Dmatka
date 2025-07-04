@@ -242,25 +242,28 @@ const AddMoney = () => {
         }),
       });
 
-      // Read response body once and handle both success and error cases
-      let data = null;
-      let errorMessage = "Failed to submit payment request";
+      // Handle response based on status first, then try to parse JSON
+      if (!response.ok) {
+        let errorMessage = "Failed to submit payment request";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData?.message || errorMessage;
+        } catch (parseError) {
+          console.error("Could not parse error response:", parseError);
+          // Use generic error message if parsing fails
+        }
+        alert(errorMessage);
+        return;
+      }
 
+      // Success case - parse the response body
+      let data = null;
       try {
         data = await response.json();
       } catch (error) {
-        console.error("Could not parse response:", error);
-        if (!response.ok) {
-          alert(errorMessage);
-          return;
-        }
-      }
-
-      // Check response status after reading body
-      if (!response.ok) {
-        errorMessage = data?.message || errorMessage;
-        alert(errorMessage);
-        return;
+        console.error("Could not parse success response:", error);
+        // Even if we can't parse the response, the request was successful
+        data = { message: "Payment request submitted successfully!" };
       }
 
       alert(
