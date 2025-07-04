@@ -120,6 +120,13 @@ export function createServer() {
   app.get("/api/wallet/stats", auth, getWalletStats);
   app.post("/api/wallet/withdraw", auth, submitWithdrawalRequest);
 
+  // Games routes
+  app.get("/api/games", getAllGames);
+  app.get("/api/games/:gameId", auth, getGameById);
+  app.post("/api/games/place-bet", auth, placeBet);
+  app.get("/api/games/user-bets", auth, getUserBets);
+  app.get("/api/games/results", getGameResults);
+
   // Support Ticket routes
   app.get("/api/support/tickets", auth, getUserTickets);
   app.post("/api/support/tickets", auth, createTicket);
