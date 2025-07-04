@@ -123,6 +123,16 @@ PaymentRequestSchema.pre("save", function (next) {
   next();
 });
 
+// Alternative: Also ensure referenceId is set before validation
+PaymentRequestSchema.pre("validate", function (next) {
+  if (this.isNew && !this.referenceId) {
+    const timestamp = Date.now().toString(36);
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    this.referenceId = `PAY_${timestamp}_${randomStr}`.toUpperCase();
+  }
+  next();
+});
+
 // Auto-update reviewedAt when status changes to approved/rejected
 PaymentRequestSchema.pre("save", function (next) {
   if (
