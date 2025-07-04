@@ -137,6 +137,7 @@ const GamePlay = () => {
 
   const fetchWalletData = async () => {
     try {
+      console.log("Fetching wallet data...");
       const response = await fetch("/api/wallet/balance", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("matka_token")}`,
@@ -145,7 +146,10 @@ const GamePlay = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("Wallet data received:", data.data);
         setWallet(data.data);
+      } else {
+        console.error("Failed to fetch wallet data:", response.status);
       }
     } catch (error) {
       console.error("Error fetching wallet:", error);
