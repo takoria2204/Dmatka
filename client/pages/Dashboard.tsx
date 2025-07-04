@@ -161,13 +161,13 @@ const Dashboard = () => {
                   <p className="text-muted-foreground text-sm">
                     Deposit Balance
                   </p>
-                  <p className="text-foreground font-bold text-lg">
+                  <div className="text-foreground font-bold text-lg">
                     {loading ? (
                       <div className="animate-spin w-4 h-4 border-2 border-matka-gold border-t-transparent rounded-full"></div>
                     ) : (
                       `₹${walletData?.depositBalance?.toLocaleString() || 0}`
                     )}
-                  </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
