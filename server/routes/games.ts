@@ -176,11 +176,12 @@ export const placeBet: RequestHandler = async (req, res) => {
     // Create deduction transaction
     const transaction = await Transaction.create({
       userId,
-      type: "bet_deduction",
+      type: "bet",
       amount: betAmount,
       status: "completed",
       description: `Bet placed on ${game.name} - ${betType}`,
-      balanceAfter: wallet.depositBalance,
+      gameId: gameId,
+      gameName: game.name,
     });
 
     bet.deductionTransactionId = transaction._id as mongoose.Types.ObjectId;
