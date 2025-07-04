@@ -73,12 +73,28 @@ const AdminWithdrawals = () => {
   const [adminNotes, setAdminNotes] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "reject">("approve");
+  const [statusFilter, setStatusFilter] = useState("pending");
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    totalAmount: 0,
+  });
 
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem("admin_token");
+    const adminUser = localStorage.getItem("admin_user");
+
+    if (!token || !adminUser) {
+      navigate("/admin/login");
+      return;
+    }
+
     fetchWithdrawals();
-  }, []);
+  }, [navigate, statusFilter]);
 
   const fetchWithdrawals = async () => {
     try {
