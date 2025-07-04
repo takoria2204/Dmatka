@@ -140,6 +140,7 @@ export function createServer() {
   app.delete("/api/admin/games/:gameId", adminAuth, deleteGame);
   app.post("/api/admin/games/:gameId/declare-result", adminAuth, declareResult);
   app.get("/api/admin/games/:gameId/analytics", adminAuth, getGameAnalytics);
+  app.get("/api/admin/game-results", adminAuth, getGameResults);
 
   // Support Ticket routes
   app.get("/api/support/tickets", auth, getUserTickets);
