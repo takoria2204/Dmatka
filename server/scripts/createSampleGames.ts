@@ -1,10 +1,18 @@
 import mongoose from "mongoose";
 import Game from "../models/Game";
+import User from "../models/User";
 import connectDB from "../config/database";
 
 const createSampleGames = async () => {
   try {
     await connectDB();
+
+    // Find admin user
+    const adminUser = await User.findOne({ role: "admin" });
+    if (!adminUser) {
+      console.error("No admin user found. Please create an admin first.");
+      process.exit(1);
+    }
 
     // Clear existing games
     await Game.deleteMany({});
