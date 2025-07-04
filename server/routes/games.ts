@@ -529,11 +529,12 @@ export const declareResult: RequestHandler = async (req, res) => {
           // Create winning transaction
           const transaction = await Transaction.create({
             userId: bet.userId,
-            type: "bet_winning",
+            type: "win",
             amount: bet.winningAmount,
             status: "completed",
             description: `Won ${game.name} - ${bet.betType}`,
-            balanceAfter: wallet.depositBalance,
+            gameId: gameId,
+            gameName: game.name,
           });
 
           bet.winningTransactionId = transaction._id as mongoose.Types.ObjectId;
