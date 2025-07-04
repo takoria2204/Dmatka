@@ -298,15 +298,21 @@ const Withdraw = () => {
         <div className="flex gap-4 mt-6">
           <Button
             onClick={handleWithdraw}
-            className="flex-1 bg-gradient-to-r from-matka-gold to-yellow-500 text-matka-dark font-bold py-3 hover:from-yellow-500 hover:to-matka-gold transition-all duration-300"
+            disabled={
+              loading ||
+              !walletData ||
+              parseFloat(formData.amount || "0") > walletData.winningBalance
+            }
+            className="flex-1 bg-gradient-to-r from-matka-gold to-yellow-500 text-matka-dark font-bold py-3 hover:from-yellow-500 hover:to-matka-gold transition-all duration-300 disabled:opacity-50"
           >
-            WITHDRAW
+            {loading ? "Submitting..." : "SUBMIT WITHDRAWAL REQUEST"}
           </Button>
           <Button
             variant="outline"
+            onClick={() => navigate("/wallet")}
             className="flex-1 border-border text-foreground hover:bg-muted py-3"
           >
-            WITHDRAW HISTORY
+            VIEW WALLET
           </Button>
         </div>
       </div>
