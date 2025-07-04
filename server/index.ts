@@ -39,6 +39,12 @@ import {
   updateTicketStatus,
   assignTicket,
 } from "./routes/support";
+import {
+  getWalletBalance,
+  getWalletTransactions,
+  getDepositHistory,
+  getWalletStats,
+} from "./routes/wallet";
 import auth from "./middleware/auth";
 import { adminAuth, superAdminAuth } from "./middleware/adminAuth";
 
