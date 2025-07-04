@@ -101,7 +101,10 @@ const createSampleGames = async () => {
     ];
 
     for (const gameData of sampleGames) {
-      const game = new Game(gameData);
+      const game = new Game({
+        ...gameData,
+        createdBy: adminUser._id,
+      });
       await game.save();
       console.log(`Created game: ${game.name}`);
     }
