@@ -27,6 +27,33 @@ const Withdraw = () => {
   const [loading, setLoading] = useState(false);
   const [balanceLoading, setBalanceLoading] = useState(true);
 
+  useEffect(() => {
+    fetchWalletData();
+  }, []);
+
+  const fetchWalletData = async () => {
+    try {
+      const token = localStorage.getItem("matka_token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch("/api/wallet/balance", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setWalletData(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+    } finally {
+      setBalanceLoading(false);
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({
       ...formData,
@@ -34,17 +61,77 @@ const Withdraw = () => {
     });
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
       alert("Please enter a valid amount");
       return;
     }
-    if (!formData.bankName || !formData.accountNumber || !formData.ifscCode) {
+
+    if (
+      !formData.bankName ||
+      !formData.accountNumber ||
+      !formData.ifscCode ||
+      !formData.accountHolderName
+    ) {
       alert("Please fill all required fields");
       return;
     }
-    alert(`Withdrawal request for ₹${formData.amount} submitted successfully!`);
-    navigate("/wallet");
+
+    const amount = parseFloat(formData.amount);
+    if (!walletData || walletData.winningBalance < amount) {
+      alert("Insufficient winning balance for withdrawal");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("matka_token");
+      if (!token) {
+        alert("Please login first");
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch("/api/wallet/withdraw", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          amount: amount,
+          bankDetails: {
+            bankName: formData.bankName,
+            accountNumber: formData.accountNumber,
+            ifscCode: formData.ifscCode,
+            accountHolderName: formData.accountHolderName,
+          },
+        }),
+      });
+
+      const responseText = await response.text();
+      let data = null;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (parseError) {
+        console.error("Could not parse response JSON:", parseError);
+      }
+
+      if (response.ok) {
+        alert(
+          data?.message ||
+            "Withdrawal request submitted successfully! It will be processed by admin.",
+        );
+        navigate("/wallet");
+      } else {
+        alert(data?.message || "Failed to submit withdrawal request");
+      }
+    } catch (error) {
+      console.error("Error submitting withdrawal:", error);
+      alert("Failed to submit withdrawal request");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
