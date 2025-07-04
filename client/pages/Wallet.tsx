@@ -190,16 +190,17 @@ const Wallet = () => {
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        {/* Winning Balance Card */}
+        {/* Total Balance Card */}
         <Card className="bg-card/90 backdrop-blur-sm border-border/50 mb-6">
           <CardContent className="p-6 text-center">
             <h2 className="text-muted-foreground text-xl mb-4">
-              Winning Balance
+              Total Wallet Balance
             </h2>
             <div className="text-6xl font-bold text-foreground mb-4">
-              ₹{walletData.winningBalance}
+              ₹{walletData?.balance?.toLocaleString() || 0}
             </div>
             <div className="inline-flex items-center gap-2 bg-green-500 text-white px-4 py-2 rounded-full text-sm font-semibold">
+              <WalletIcon className="h-4 w-4" />
               100% Safe & Secure
             </div>
           </CardContent>
