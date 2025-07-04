@@ -33,6 +33,7 @@ import AdminPaymentRequests from "./pages/AdminPaymentRequests";
 import AdminResults from "./pages/AdminResults";
 import AdminSupportTickets from "./pages/AdminSupportTickets";
 import Support from "./pages/Support";
+import BettingHistory from "./pages/BettingHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
