@@ -100,16 +100,23 @@ export const placeBet: RequestHandler = async (req, res) => {
     }
 
     if (betAmount <= 0) {
+      console.log("Validation failed - invalid bet amount:", betAmount);
       res.status(400).json({ message: "Bet amount must be positive" });
       return;
     }
 
     // Get game details
+    console.log("Fetching game with ID:", gameId);
     const game = await Game.findById(gameId);
     if (!game || !game.isActive) {
+      console.log("Game not found or inactive:", {
+        game: !!game,
+        isActive: game?.isActive,
+      });
       res.status(404).json({ message: "Game not found or inactive" });
       return;
     }
+    console.log("Game found:", game.name);
 
     // Check if game is open for betting
     const now = new Date();
