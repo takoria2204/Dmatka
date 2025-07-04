@@ -44,6 +44,7 @@ import {
   getWalletTransactions,
   getDepositHistory,
   getWalletStats,
+  submitWithdrawalRequest,
 } from "./routes/wallet";
 import auth from "./middleware/auth";
 import { adminAuth, superAdminAuth } from "./middleware/adminAuth";
