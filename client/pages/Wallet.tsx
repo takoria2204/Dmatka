@@ -1,17 +1,66 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, Plus, Minus, History } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  ArrowLeft,
+  Plus,
+  Minus,
+  History,
+  RefreshCw,
+  CheckCircle,
+  Clock,
+  AlertCircle,
+  TrendingUp,
+  Wallet as WalletIcon,
+} from "lucide-react";
+
+interface WalletData {
+  balance: number;
+  winningBalance: number;
+  depositBalance: number;
+  bonusBalance: number;
+  commissionBalance: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalWinnings: number;
+  totalBets: number;
+}
+
+interface PaymentRequest {
+  _id: string;
+  gatewayId: {
+    displayName: string;
+    type: string;
+  };
+  amount: number;
+  status: "pending" | "approved" | "rejected";
+  referenceId: string;
+  createdAt: string;
+  transactionId?: string;
+  adminNotes?: string;
+}
+
+interface WalletStats {
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalWinnings: number;
+  totalBets: number;
+  pendingDeposits: number;
+  pendingCount: number;
+  approvedDeposits: number;
+  approvedCount: number;
+}
 
 const Wallet = () => {
   const navigate = useNavigate();
-  const [walletData] = useState({
-    winningBalance: 0,
-    deposit: 0,
-    bonus: 100,
-    commission: 0,
-  });
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [depositHistory, setDepositHistory] = useState<PaymentRequest[]>([]);
+  const [walletStats, setWalletStats] = useState<WalletStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   return (
     <div className="min-h-screen bg-matka-dark">
