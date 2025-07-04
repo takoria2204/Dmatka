@@ -27,26 +27,46 @@ interface Bet {
     _id: string;
     fullName: string;
     mobile: string;
-    email: string;
   };
   gameId: string;
   gameName: string;
-  betType: string;
-  betNumbers: string[];
-  amount: number;
-  potentialWin: number;
-  status: "pending" | "won" | "lost" | "cancelled";
-  result?: string;
-  winAmount?: number;
-  placedAt: string;
-  resultAt?: string;
+  gameType: "jodi" | "haruf" | "crossing";
+  betType: "jodi" | "haruf" | "crossing";
+  betNumber: string;
+  betAmount: number;
+  potentialWinning: number;
+  winningAmount?: number;
+  actualPayout?: number;
+  isWinner?: boolean;
+  status: "pending" | "won" | "lost" | "cancelled" | "refunded";
+  betPlacedAt: string;
+  gameDate: string;
+  gameTime: string;
+  betData?: {
+    jodiNumber?: string;
+    harufDigit?: string;
+    harufPosition?: "first" | "last";
+    crossingCombination?: string;
+  };
   createdAt: string;
   updatedAt: string;
+}
+
+interface BetStats {
+  totalBets: number;
+  totalAmount: number;
+  totalWinnings: number;
+  pendingBets: number;
+  wonBets: number;
+  lostBets: number;
 }
 
 const AdminBets = () => {
   const [bets, setBets] = useState<Bet[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<BetStats | null>(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [gameTypeFilter, setGameTypeFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [gameFilter, setGameFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
