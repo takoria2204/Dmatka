@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -13,11 +14,55 @@ import {
   Dice6,
   MessageSquare,
   Target,
+  RefreshCw,
 } from "lucide-react";
+
+interface WalletData {
+  balance: number;
+  winningBalance: number;
+  depositBalance: number;
+  bonusBalance: number;
+  commissionBalance: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalWinnings: number;
+  totalBets: number;
+}
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchWalletData();
+    }
+  }, [user]);
+
+  const fetchWalletData = async () => {
+    try {
+      const token = localStorage.getItem("matka_token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch("/api/wallet/balance", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setWalletData(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const gameTypes = [
     {
