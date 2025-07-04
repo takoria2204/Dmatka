@@ -105,6 +105,12 @@ export function createServer() {
   app.get("/api/payment-requests/my", auth, getUserPaymentRequests);
   app.post("/api/upload", uploadFile);
 
+  // Wallet routes
+  app.get("/api/wallet/balance", auth, getWalletBalance);
+  app.get("/api/wallet/transactions", auth, getWalletTransactions);
+  app.get("/api/wallet/deposit-history", auth, getDepositHistory);
+  app.get("/api/wallet/stats", auth, getWalletStats);
+
   // Support Ticket routes
   app.get("/api/support/tickets", auth, getUserTickets);
   app.post("/api/support/tickets", auth, createTicket);
