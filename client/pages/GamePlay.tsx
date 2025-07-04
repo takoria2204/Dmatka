@@ -280,7 +280,10 @@ const GamePlay = () => {
       console.log("Response data:", data);
 
       if (response.ok) {
-        alert(data?.message || "Bet placed successfully!");
+        // Show success popup with bet details
+        const successMessage = `🎉 Bet Placed Successfully!\n\nGame: ${game?.name}\nBet Type: ${selectedBetType.toUpperCase()}\nNumber: ${betData.betNumber}\nAmount: ₹${betData.betAmount}\nPotential Win: ₹${calculatePotentialWinning().toLocaleString()}\n\n✅ Amount deducted from wallet\n📊 Check "My Bets" for updates`;
+        alert(successMessage);
+
         setShowBetModal(false);
         setBetData({
           betNumber: "",
@@ -293,7 +296,15 @@ const GamePlay = () => {
         const errorMessage =
           data?.message || `Failed to place bet (Status: ${response.status})`;
         console.error("Bet placement failed:", errorMessage);
-        alert(errorMessage);
+
+        // Show specific error message
+        if (errorMessage.includes("Insufficient")) {
+          alert(
+            "❌ Insufficient Wallet Balance!\n\nPlease add money to your wallet to place this bet.\n\n💰 Click 'Add Money' to recharge your wallet.",
+          );
+        } else {
+          alert(`❌ Bet Failed!\n\n${errorMessage}`);
+        }
       }
     } catch (error) {
       console.error("Error placing bet:", error);
