@@ -72,13 +72,29 @@ export const getGameById: RequestHandler = async (req, res) => {
 
 // Place a bet (authenticated users)
 export const placeBet: RequestHandler = async (req, res) => {
+  console.log("=== Place Bet API Called ===");
+  console.log("Request body:", req.body);
+  console.log(
+    "User from auth:",
+    (req as any).user ? "User authenticated" : "No user",
+  );
+
   try {
     const { gameId, betType, betNumber, betAmount, betData } = req.body;
     const userId = (req as any).user._id;
     const user = (req as any).user;
 
+    console.log("Extracted data:", {
+      gameId,
+      betType,
+      betNumber,
+      betAmount,
+      userId,
+    });
+
     // Validate input
     if (!gameId || !betType || !betNumber || !betAmount) {
+      console.log("Validation failed - missing fields");
       res.status(400).json({ message: "Missing required fields" });
       return;
     }
