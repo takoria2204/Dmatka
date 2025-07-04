@@ -201,6 +201,22 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
+    <Route
+      path="/games"
+      element={
+        <ProtectedRoute>
+          <Games />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/game/:gameId"
+      element={
+        <ProtectedRoute>
+          <GamePlay />
+        </ProtectedRoute>
+      }
+    />
     <Route path="/admin/login" element={<AdminLogin />} />
     <Route
       path="/admin/dashboard"
