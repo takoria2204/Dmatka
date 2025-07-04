@@ -272,21 +272,137 @@ const Wallet = () => {
           </Button>
         </div>
 
-        {/* Deposit History Button */}
-        <Button
-          variant="outline"
-          className="w-full border-border text-foreground hover:bg-muted py-3 mb-6"
-        >
-          <History className="h-4 w-4 mr-2" />
-          Deposit History
-        </Button>
+        {/* Statistics and History */}
+        <Card className="bg-card/90 backdrop-blur-sm border-border/50 mb-6">
+          <CardHeader>
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Wallet Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="stats" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 bg-muted/20">
+                <TabsTrigger
+                  value="stats"
+                  className="data-[state=active]:bg-matka-gold data-[state=active]:text-matka-dark"
+                >
+                  Statistics
+                </TabsTrigger>
+                <TabsTrigger
+                  value="history"
+                  className="data-[state=active]:bg-matka-gold data-[state=active]:text-matka-dark"
+                >
+                  Deposit History
+                </TabsTrigger>
+              </TabsList>
 
-        {/* Success Message */}
-        <div className="text-center">
-          <p className="text-green-500 text-sm">
-            Updated data fetched successfully
-          </p>
-        </div>
+              <TabsContent value="stats" className="space-y-4">
+                {walletStats && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-muted/20 rounded-lg p-4">
+                      <p className="text-muted-foreground text-sm">
+                        Total Deposits
+                      </p>
+                      <p className="text-foreground text-xl font-bold">
+                        ₹{walletStats.totalDeposits.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="bg-muted/20 rounded-lg p-4">
+                      <p className="text-muted-foreground text-sm">
+                        Total Winnings
+                      </p>
+                      <p className="text-green-500 text-xl font-bold">
+                        ₹{walletStats.totalWinnings.toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="bg-yellow-500/20 rounded-lg p-4">
+                      <p className="text-muted-foreground text-sm">
+                        Pending Deposits
+                      </p>
+                      <p className="text-yellow-500 text-xl font-bold">
+                        ₹{walletStats.pendingDeposits.toLocaleString()}
+                      </p>
+                      <p className="text-yellow-400 text-xs">
+                        {walletStats.pendingCount} requests
+                      </p>
+                    </div>
+                    <div className="bg-muted/20 rounded-lg p-4">
+                      <p className="text-muted-foreground text-sm">
+                        Total Bets
+                      </p>
+                      <p className="text-foreground text-xl font-bold">
+                        ₹{walletStats.totalBets.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="history" className="space-y-3">
+                {depositHistory.length === 0 ? (
+                  <div className="text-center py-8">
+                    <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      No deposit history found
+                    </p>
+                    <Button
+                      onClick={() => navigate("/add-money")}
+                      className="mt-4 bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
+                    >
+                      Make Your First Deposit
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {depositHistory.map((request) => (
+                      <div
+                        key={request._id}
+                        className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/10"
+                      >
+                        <div>
+                          <p className="font-medium text-foreground">
+                            ₹{request.amount.toLocaleString()}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {request.gatewayId.displayName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {request.referenceId}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <Badge
+                            className={`${getStatusColor(request.status)} border-0`}
+                          >
+                            <div className="flex items-center gap-1">
+                              {getStatusIcon(request.status)}
+                              <span className="capitalize">
+                                {request.status}
+                              </span>
+                            </div>
+                          </Badge>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDate(request.createdAt)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {depositHistory.length >= 10 && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-border text-foreground hover:bg-muted"
+                        onClick={() => navigate("/add-money")}
+                      >
+                        View All Deposit History
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
