@@ -292,6 +292,14 @@ const AppRoutes = () => (
       }
     />
     <Route
+      path="/admin/game-results"
+      element={
+        <AdminProtectedRoute>
+          <AdminGameResults />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
       path="/admin/support"
       element={
         <AdminProtectedRoute>
