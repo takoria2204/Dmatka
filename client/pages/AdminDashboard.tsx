@@ -171,6 +171,9 @@ const AdminDashboard = () => {
       case "Transactions":
         navigate("/admin/transactions");
         break;
+      case "Withdrawals":
+        navigate("/admin/withdrawals");
+        break;
       case "Payment Gateway":
         navigate("/admin/payment-gateways");
         break;
