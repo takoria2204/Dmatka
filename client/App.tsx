@@ -34,6 +34,8 @@ import AdminResults from "./pages/AdminResults";
 import AdminSupportTickets from "./pages/AdminSupportTickets";
 import Support from "./pages/Support";
 import BettingHistory from "./pages/BettingHistory";
+import Games from "./pages/Games";
+import GamePlay from "./pages/GamePlay";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
