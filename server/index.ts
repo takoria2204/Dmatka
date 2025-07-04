@@ -122,10 +122,10 @@ export function createServer() {
 
   // Games routes
   app.get("/api/games", getAllGames);
-  app.get("/api/games/:gameId", auth, getGameById);
-  app.post("/api/games/place-bet", auth, placeBet);
-  app.get("/api/games/user-bets", auth, getUserBets);
   app.get("/api/games/results", getGameResults);
+  app.get("/api/games/user-bets", auth, getUserBets);
+  app.post("/api/games/place-bet", auth, placeBet);
+  app.get("/api/games/:gameId", auth, getGameById);
 
   // Support Ticket routes
   app.get("/api/support/tickets", auth, getUserTickets);
