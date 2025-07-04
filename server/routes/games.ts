@@ -143,12 +143,21 @@ export const placeBet: RequestHandler = async (req, res) => {
     }
 
     // Check user wallet balance
+    console.log("Checking wallet for user:", userId);
     let wallet = await Wallet.findOne({ userId });
     if (!wallet) {
+      console.log("Creating new wallet for user");
       wallet = await Wallet.create({ userId });
     }
+    console.log(
+      "Wallet found - depositBalance:",
+      wallet.depositBalance,
+      "required:",
+      betAmount,
+    );
 
     if (wallet.depositBalance < betAmount) {
+      console.log("Insufficient balance - returning error");
       res.status(400).json({
         message: "Insufficient wallet balance",
         currentBalance: wallet.depositBalance,
