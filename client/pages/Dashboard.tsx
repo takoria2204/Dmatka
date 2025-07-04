@@ -239,11 +239,11 @@ const Dashboard = () => {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             {[
+              { name: "Play Games", route: "/games", icon: Trophy },
               { name: "Add Money", route: "/add-money", icon: Wallet },
               { name: "Withdraw", route: "/withdraw", icon: TrendingUp },
-              { name: "Charts", route: "/charts", icon: Trophy },
               { name: "Wallet", route: "/wallet", icon: User },
-              { name: "My Bets", route: "/betting-history", icon: Trophy },
+              { name: "My Bets", route: "/betting-history", icon: Target },
               { name: "Support", route: "/support", icon: MessageSquare },
             ].map((action, index) => (
               <Card
