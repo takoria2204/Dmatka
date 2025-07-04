@@ -52,6 +52,12 @@ import {
   placeBet,
   getUserBets,
   getGameResults,
+  createGame,
+  getAdminGames,
+  updateGame,
+  deleteGame,
+  declareResult,
+  getGameAnalytics,
 } from "./routes/games";
 import auth from "./middleware/auth";
 import { adminAuth, superAdminAuth } from "./middleware/adminAuth";
