@@ -126,7 +126,7 @@ export function createServer() {
   app.get("/api/wallet/stats", auth, getWalletStats);
   app.post("/api/wallet/withdraw", auth, submitWithdrawalRequest);
 
-  // Games routes
+  // Games routes (specific routes MUST come before parameterized routes)
   app.get("/api/games", getAllGames);
   app.get("/api/games/results", getGameResults);
   app.get("/api/games/user-bets", auth, getUserBets);
