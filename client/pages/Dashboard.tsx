@@ -121,15 +121,29 @@ const Dashboard = () => {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={logout}
-              variant="outline"
-              size="sm"
-              className="border-border text-foreground hover:bg-muted"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={fetchWalletData}
+                variant="outline"
+                size="sm"
+                disabled={loading}
+                className="border-border text-foreground hover:bg-muted"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+              <Button
+                onClick={logout}
+                variant="outline"
+                size="sm"
+                className="border-border text-foreground hover:bg-muted"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
