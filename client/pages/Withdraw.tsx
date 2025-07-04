@@ -154,13 +154,33 @@ const Withdraw = () => {
       </header>
 
       <div className="container mx-auto px-4 py-6">
-        {/* Security Badge */}
+        {/* Wallet Balance Card */}
         <Card className="bg-card/90 backdrop-blur-sm border-border/50 mb-6">
-          <CardContent className="p-6 text-center">
-            <div className="text-6xl mb-4">💳</div>
-            <div className="inline-flex items-center gap-2 bg-green-500 text-white px-6 py-2 rounded-full text-sm font-semibold">
-              100% safe & Secure
-            </div>
+          <CardHeader>
+            <CardTitle className="text-foreground flex items-center gap-2">
+              <Wallet className="h-5 w-5" />
+              Available for Withdrawal
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {balanceLoading ? (
+              <div className="text-center">
+                <div className="animate-spin w-6 h-6 border-4 border-matka-gold border-t-transparent rounded-full mx-auto"></div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <p className="text-4xl font-bold text-green-500 mb-2">
+                  ₹{walletData?.winningBalance?.toLocaleString() || 0}
+                </p>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Winning Balance (Only winning balance can be withdrawn)
+                </p>
+                <div className="flex items-center justify-center gap-2 bg-green-500/20 text-green-500 px-4 py-2 rounded-full text-sm font-semibold">
+                  <AlertCircle className="h-4 w-4" />
+                  100% Safe & Secure
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
