@@ -214,30 +214,39 @@ const Wallet = () => {
           Exchange Winning Value
         </Button>
 
-        {/* Balance Cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
+        {/* Balance Breakdown Cards */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
           <Card className="bg-card/50 backdrop-blur-sm border-border/30">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-foreground mb-2">
-                ₹{walletData.deposit}
+              <div className="text-2xl font-bold text-green-500 mb-2">
+                ₹{walletData?.winningBalance?.toLocaleString() || 0}
               </div>
-              <p className="text-muted-foreground text-sm">Deposit</p>
+              <p className="text-muted-foreground text-sm">Winning Balance</p>
             </CardContent>
           </Card>
 
           <Card className="bg-card/50 backdrop-blur-sm border-border/30">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-foreground mb-2">
-                ₹{walletData.bonus}
+              <div className="text-2xl font-bold text-blue-500 mb-2">
+                ₹{walletData?.depositBalance?.toLocaleString() || 0}
               </div>
-              <p className="text-muted-foreground text-sm">Bonus</p>
+              <p className="text-muted-foreground text-sm">Deposit Balance</p>
             </CardContent>
           </Card>
 
           <Card className="bg-card/50 backdrop-blur-sm border-border/30">
             <CardContent className="p-4 text-center">
-              <div className="text-2xl font-bold text-foreground mb-2">
-                ₹{walletData.commission}
+              <div className="text-2xl font-bold text-purple-500 mb-2">
+                ₹{walletData?.bonusBalance?.toLocaleString() || 0}
+              </div>
+              <p className="text-muted-foreground text-sm">Bonus Balance</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card/50 backdrop-blur-sm border-border/30">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-orange-500 mb-2">
+                ₹{walletData?.commissionBalance?.toLocaleString() || 0}
               </div>
               <p className="text-muted-foreground text-sm">Commission</p>
             </CardContent>
