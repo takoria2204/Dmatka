@@ -67,6 +67,78 @@ const AdminBets = () => {
   const [stats, setStats] = useState<BetStats | null>(null);
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameTypeFilter, setGameTypeFilter] = useState("all");
+  const [refreshing, setRefreshing] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("admin_token");
+    const adminUser = localStorage.getItem("admin_user");
+
+    if (!token || !adminUser) {
+      navigate("/admin/login");
+      return;
+    }
+
+    fetchBets();
+  }, [navigate, statusFilter, gameTypeFilter]);
+
+  const fetchBets = async () => {
+    try {
+      if (!loading) setRefreshing(true);
+
+      const token = localStorage.getItem("admin_token");
+      const queryParams = new URLSearchParams({
+        limit: "100",
+        ...(statusFilter !== "all" && { status: statusFilter }),
+        ...(gameTypeFilter !== "all" && { gameType: gameTypeFilter }),
+      });
+
+      const response = await fetch(`/api/admin/bets?${queryParams}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("admin_user");
+          navigate("/admin/login");
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        setBets(data.data.bets);
+
+        // Calculate stats
+        const betsData = data.data.bets;
+        const stats: BetStats = {
+          totalBets: betsData.length,
+          totalAmount: betsData.reduce(
+            (sum: number, bet: Bet) => sum + bet.betAmount,
+            0,
+          ),
+          totalWinnings: betsData.reduce(
+            (sum: number, bet: Bet) => sum + (bet.winningAmount || 0),
+            0,
+          ),
+          pendingBets: betsData.filter((bet: Bet) => bet.status === "pending")
+            .length,
+          wonBets: betsData.filter((bet: Bet) => bet.status === "won").length,
+          lostBets: betsData.filter((bet: Bet) => bet.status === "lost").length,
+        };
+        setStats(stats);
+      }
+    } catch (error) {
+      console.error("Error fetching bets:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [gameFilter, setGameFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
