@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -12,13 +12,17 @@ import {
 } from "@/components/ui/select";
 import {
   ArrowLeft,
-  Search,
-  Download,
-  Filter,
-  Eye,
-  DollarSign,
+  RefreshCw,
   Trophy,
+  DollarSign,
   Clock,
+  Target,
+  Zap,
+  User,
+  Eye,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from "lucide-react";
 
 interface Bet {
@@ -139,130 +143,58 @@ const AdminBets = () => {
       setRefreshing(false);
     }
   };
-  const [searchTerm, setSearchTerm] = useState("");
-  const [gameFilter, setGameFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalBets: 0,
-    hasPrev: false,
-    hasNext: false,
-  });
-
-  const navigate = useNavigate();
-
-  // Check admin authentication on mount
-  useEffect(() => {
-    const token = localStorage.getItem("admin_token");
-    const adminUser = localStorage.getItem("admin_user");
-
-    if (!token || !adminUser) {
-      navigate("/admin/login");
-      return;
-    }
-  }, [navigate]);
-
-  const fetchBets = async () => {
-    try {
-      const token = localStorage.getItem("admin_token");
-
-      if (!token) {
-        console.error("No admin token found");
-        navigate("/admin/login");
-        return;
-      }
-
-      const params = new URLSearchParams({
-        page: pagination.currentPage.toString(),
-        limit: "20",
-        ...(gameFilter !== "all" && { gameId: gameFilter }),
-        ...(statusFilter !== "all" && { status: statusFilter }),
-        ...(searchTerm && { search: searchTerm }),
-      });
-
-      const response = await fetch(`/api/admin/bets?${params}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          localStorage.removeItem("admin_token");
-          localStorage.removeItem("admin_user");
-          navigate("/admin/login");
-          return;
-        }
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      setBets(data.data.bets);
-      setPagination(data.data.pagination);
-    } catch (error) {
-      console.error("Error fetching bets:", error);
-      if (
-        error instanceof TypeError &&
-        error.message.includes("Failed to fetch")
-      ) {
-        console.error("Network error - backend server may not be running");
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBets();
-  }, [pagination.currentPage, gameFilter, statusFilter]);
-
-  const handleSearch = () => {
-    setPagination((prev) => ({ ...prev, currentPage: 1 }));
-    fetchBets();
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case "won":
-        return "text-green-500";
-      case "pending":
-        return "text-yellow-500";
+        return "bg-green-500";
       case "lost":
-        return "text-red-500";
+        return "bg-red-500";
+      case "pending":
+        return "bg-yellow-500";
       case "cancelled":
-        return "text-gray-500";
+        return "bg-gray-500";
+      case "refunded":
+        return "bg-blue-500";
       default:
-        return "text-foreground";
+        return "bg-gray-500";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "won":
-        return <Trophy className="h-4 w-4" />;
+        return <CheckCircle className="h-4 w-4" />;
+      case "lost":
+        return <XCircle className="h-4 w-4" />;
       case "pending":
         return <Clock className="h-4 w-4" />;
-      case "lost":
-        return <DollarSign className="h-4 w-4" />;
+      case "cancelled":
+      case "refunded":
+        return <AlertCircle className="h-4 w-4" />;
       default:
         return null;
     }
   };
 
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-    }).format(amount);
+  const getBetTypeIcon = (betType: string) => {
+    switch (betType) {
+      case "jodi":
+        return <Target className="h-4 w-4" />;
+      case "haruf":
+        return <Zap className="h-4 w-4" />;
+      case "crossing":
+        return <Trophy className="h-4 w-4" />;
+      default:
+        return <Target className="h-4 w-4" />;
+    }
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-IN", {
-      day: "2-digit",
-      month: "short",
+    return new Date(dateString).toLocaleString("en-IN", {
       year: "numeric",
+      month: "short",
+      day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -270,14 +202,14 @@ const AdminBets = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-matka-dark flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-matka-gold border-t-transparent rounded-full"></div>
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-matka-dark">
+    <div className="min-h-screen bg-[#1a1a1a]">
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -286,243 +218,249 @@ const AdminBets = () => {
               variant="ghost"
               size="sm"
               onClick={() => navigate("/admin/dashboard")}
-              className="text-foreground hover:text-matka-gold"
+              className="text-gray-300 hover:text-white"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
-            <h1 className="text-2xl font-bold text-foreground">
-              Bet Management
+            <h1 className="text-2xl font-bold text-white">
+              Betting Management
             </h1>
           </div>
           <Button
-            variant="outline"
-            size="sm"
-            className="border-border text-foreground hover:bg-muted"
+            onClick={fetchBets}
+            disabled={refreshing}
+            className="bg-blue-500 text-white hover:bg-blue-600"
           >
-            <Download className="h-4 w-4 mr-2" />
-            Export
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+            />
+            Refresh
           </Button>
         </div>
 
+        {/* Stats Cards */}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 mb-6">
+            <Card className="bg-[#2a2a2a] border-gray-700">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-white">
+                    {stats.totalBets}
+                  </p>
+                  <p className="text-sm text-gray-400">Total Bets</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-red-500/20 border-red-500/30">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-400">
+                    ₹{stats.totalAmount.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-red-300">Total Amount</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-green-500/20 border-green-500/30">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-400">
+                    ₹{stats.totalWinnings.toLocaleString()}
+                  </p>
+                  <p className="text-sm text-green-300">Total Winnings</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-yellow-500/20 border-yellow-500/30">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-yellow-400">
+                    {stats.pendingBets}
+                  </p>
+                  <p className="text-sm text-yellow-300">Pending</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-green-500/20 border-green-500/30">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-green-400">
+                    {stats.wonBets}
+                  </p>
+                  <p className="text-sm text-green-300">Won</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-red-500/20 border-red-500/30">
+              <CardContent className="p-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-red-400">
+                    {stats.lostBets}
+                  </p>
+                  <p className="text-sm text-red-300">Lost</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Filters */}
-        <Card className="bg-card/80 backdrop-blur-sm border-border/50 mb-6">
-          <CardHeader>
-            <CardTitle className="text-foreground flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filters & Search
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="Search by user, game, numbers..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyPress={(e) => e.key === "Enter" && handleSearch()}
-                  className="pl-10 bg-input border-border text-foreground"
-                />
-              </div>
-              <Select value={gameFilter} onValueChange={setGameFilter}>
-                <SelectTrigger className="bg-input border-border text-foreground">
-                  <SelectValue placeholder="Game" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Games</SelectItem>
-                  <SelectItem value="delhi-bazar">Delhi Bazar</SelectItem>
-                  <SelectItem value="gali">Gali</SelectItem>
-                  <SelectItem value="disawer">Disawer</SelectItem>
-                  <SelectItem value="faridabad">Faridabad</SelectItem>
-                  <SelectItem value="ghaziabad">Ghaziabad</SelectItem>
-                </SelectContent>
-              </Select>
+        <Card className="bg-[#2a2a2a] border-gray-700 mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <label className="text-gray-300">Filter by Status:</label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="bg-input border-border text-foreground">
-                  <SelectValue placeholder="Status" />
+                <SelectTrigger className="w-48 bg-[#1a1a1a] border-gray-600 text-white">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="won">Won</SelectItem>
-                  <SelectItem value="lost">Lost</SelectItem>
+                  <SelectItem value="all">All Bets</SelectItem>
+                  <SelectItem value="pending">Pending Only</SelectItem>
+                  <SelectItem value="won">Won Only</SelectItem>
+                  <SelectItem value="lost">Lost Only</SelectItem>
                   <SelectItem value="cancelled">Cancelled</SelectItem>
                 </SelectContent>
               </Select>
-              <Button
-                onClick={handleSearch}
-                className="bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
-              >
-                <Search className="h-4 w-4 mr-2" />
-                Search
-              </Button>
+
+              <label className="text-gray-300">Filter by Game Type:</label>
+              <Select value={gameTypeFilter} onValueChange={setGameTypeFilter}>
+                <SelectTrigger className="w-48 bg-[#1a1a1a] border-gray-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="jodi">Jodi</SelectItem>
+                  <SelectItem value="haruf">Haruf</SelectItem>
+                  <SelectItem value="crossing">Crossing</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
 
-        {/* Bets Table */}
-        <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+        {/* Bets List */}
+        <Card className="bg-[#2a2a2a] border-gray-700">
           <CardHeader>
-            <CardTitle className="text-foreground">
-              Bets ({pagination.totalBets})
+            <CardTitle className="text-white flex items-center gap-2">
+              <Trophy className="h-5 w-5" />
+              All User Bets ({bets.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">
-                      User
-                    </th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">
-                      Game
-                    </th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">
-                      Bet Details
-                    </th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">
-                      Amount
-                    </th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">
-                      Status
-                    </th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">
-                      Date
-                    </th>
-                    <th className="text-left py-3 px-4 text-muted-foreground font-medium">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bets.map((bet) => (
-                    <tr
-                      key={bet._id}
-                      className="border-b border-border/50 hover:bg-muted/50"
-                    >
-                      <td className="py-4 px-4">
-                        <div className="flex flex-col">
-                          <span className="text-foreground font-medium">
-                            {bet.userId?.fullName || "N/A"}
-                          </span>
-                          <span className="text-muted-foreground text-sm">
-                            {bet.userId?.mobile || "N/A"}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex flex-col">
-                          <span className="text-foreground font-medium">
-                            {bet.gameName}
-                          </span>
-                          <span className="text-muted-foreground text-sm">
-                            {bet.betType}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex flex-col">
-                          <span className="text-foreground font-medium">
-                            {bet.betNumbers?.join(", ") || "N/A"}
-                          </span>
-                          <span className="text-muted-foreground text-sm">
-                            Potential: {formatAmount(bet.potentialWin || 0)}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex flex-col">
-                          <span className="text-foreground font-medium">
-                            {formatAmount(bet.amount)}
-                          </span>
-                          {bet.winAmount && (
-                            <span className="text-green-500 text-sm">
-                              Won: {formatAmount(bet.winAmount)}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div
-                          className={`flex items-center gap-2 ${getStatusColor(bet.status)}`}
-                        >
-                          {getStatusIcon(bet.status)}
-                          <span className="capitalize font-medium">
-                            {bet.status}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex flex-col">
-                          <span className="text-muted-foreground text-sm">
-                            {formatDate(bet.placedAt)}
-                          </span>
-                          {bet.resultAt && (
-                            <span className="text-muted-foreground text-sm">
-                              Result: {formatDate(bet.resultAt)}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="py-4 px-4">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground hover:text-matka-gold"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {bets.length === 0 && (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">No bets found</p>
+            {bets.length === 0 ? (
+              <div className="text-center py-12">
+                <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400 text-lg mb-2">No bets found</p>
+                <p className="text-gray-500 text-sm">
+                  User betting activity will appear here
+                </p>
               </div>
-            )}
+            ) : (
+              <div className="space-y-4">
+                {bets.map((bet) => (
+                  <Card key={bet._id} className="bg-[#1a1a1a] border-gray-600">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-3">
+                            <Badge className={getStatusColor(bet.status)}>
+                              <div className="flex items-center gap-1">
+                                {getStatusIcon(bet.status)}
+                                <span className="capitalize">{bet.status}</span>
+                              </div>
+                            </Badge>
+                            <span className="text-sm text-gray-400">
+                              {formatDate(bet.betPlacedAt)}
+                            </span>
+                          </div>
 
-            {/* Pagination */}
-            {pagination.totalPages > 1 && (
-              <div className="flex justify-center gap-2 mt-6">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!pagination.hasPrev}
-                  onClick={() =>
-                    setPagination((prev) => ({
-                      ...prev,
-                      currentPage: prev.currentPage - 1,
-                    }))
-                  }
-                  className="border-border text-foreground hover:bg-muted"
-                >
-                  Previous
-                </Button>
-                <span className="text-muted-foreground text-sm py-2 px-4">
-                  Page {pagination.currentPage} of {pagination.totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={!pagination.hasNext}
-                  onClick={() =>
-                    setPagination((prev) => ({
-                      ...prev,
-                      currentPage: prev.currentPage + 1,
-                    }))
-                  }
-                  className="border-border text-foreground hover:bg-muted"
-                >
-                  Next
-                </Button>
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                              <p className="text-white font-semibold flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                {bet.userId.fullName}
+                              </p>
+                              <p className="text-gray-400 text-sm">
+                                {bet.userId.mobile}
+                              </p>
+                            </div>
+
+                            <div>
+                              <p className="text-white font-semibold flex items-center gap-2">
+                                {getBetTypeIcon(bet.betType)}
+                                {bet.gameName}
+                              </p>
+                              <p className="text-gray-400 text-sm capitalize">
+                                {bet.betType} • {bet.gameType}
+                              </p>
+                              <p className="text-yellow-400 text-sm font-bold">
+                                Number: {bet.betNumber}
+                              </p>
+                            </div>
+
+                            <div className="text-center">
+                              <p className="text-gray-400 text-xs">
+                                Bet Amount
+                              </p>
+                              <p className="text-white font-bold text-lg">
+                                ₹{bet.betAmount.toLocaleString()}
+                              </p>
+                              <p className="text-gray-400 text-xs">
+                                Potential: ₹
+                                {bet.potentialWinning.toLocaleString()}
+                              </p>
+                            </div>
+
+                            <div className="text-center">
+                              <p className="text-gray-400 text-xs">
+                                {bet.status === "won"
+                                  ? "Actual Winning"
+                                  : "Status"}
+                              </p>
+                              {bet.status === "won" ? (
+                                <p className="text-green-400 font-bold text-lg">
+                                  ₹{(bet.winningAmount || 0).toLocaleString()}
+                                </p>
+                              ) : bet.status === "lost" ? (
+                                <p className="text-red-400 font-bold text-lg">
+                                  Lost
+                                </p>
+                              ) : (
+                                <p className="text-yellow-400 font-bold text-lg">
+                                  Pending
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {bet.betData && (
+                            <div className="mt-3 p-2 bg-gray-800 rounded text-sm">
+                              {bet.betType === "haruf" &&
+                                bet.betData.harufPosition && (
+                                  <span className="text-gray-300">
+                                    Position: {bet.betData.harufPosition} digit
+                                  </span>
+                                )}
+                              {bet.betType === "crossing" &&
+                                bet.betData.crossingCombination && (
+                                  <span className="text-gray-300">
+                                    Combination:{" "}
+                                    {bet.betData.crossingCombination}
+                                  </span>
+                                )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </CardContent>
