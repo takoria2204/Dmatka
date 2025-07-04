@@ -227,6 +227,13 @@ const GamePlay = () => {
 
   const confirmBet = async () => {
     try {
+      console.log("Placing bet with data:", {
+        gameId,
+        betType: selectedBetType,
+        betNumber: betData.betNumber,
+        betAmount: parseFloat(betData.betAmount),
+      });
+
       const response = await fetch("/api/games/place-bet", {
         method: "POST",
         headers: {
@@ -253,10 +260,23 @@ const GamePlay = () => {
         }),
       });
 
-      const data = await response.json();
+      console.log("Response status:", response.status);
+
+      // Read response text first to handle both success and error cases
+      const responseText = await response.text();
+      let data = null;
+
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (parseError) {
+        console.error("Could not parse response JSON:", parseError);
+        console.log("Raw response:", responseText);
+      }
+
+      console.log("Response data:", data);
 
       if (response.ok) {
-        alert("Bet placed successfully!");
+        alert(data?.message || "Bet placed successfully!");
         setShowBetModal(false);
         setBetData({
           betNumber: "",
@@ -266,11 +286,14 @@ const GamePlay = () => {
         });
         fetchWalletData(); // Refresh wallet balance
       } else {
-        alert(data.message || "Failed to place bet");
+        const errorMessage =
+          data?.message || `Failed to place bet (Status: ${response.status})`;
+        console.error("Bet placement failed:", errorMessage);
+        alert(errorMessage);
       }
     } catch (error) {
       console.error("Error placing bet:", error);
-      alert("Failed to place bet");
+      alert("Network error: Failed to place bet");
     }
   };
 
