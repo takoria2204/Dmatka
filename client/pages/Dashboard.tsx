@@ -237,12 +237,13 @@ const Dashboard = () => {
             <User className="h-5 w-5 text-matka-gold" />
             Quick Actions
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             {[
               { name: "Add Money", route: "/add-money", icon: Wallet },
               { name: "Withdraw", route: "/withdraw", icon: TrendingUp },
               { name: "Charts", route: "/charts", icon: Trophy },
               { name: "Wallet", route: "/wallet", icon: User },
+              { name: "My Bets", route: "/betting-history", icon: Trophy },
               { name: "Support", route: "/support", icon: MessageSquare },
             ].map((action, index) => (
               <Card
