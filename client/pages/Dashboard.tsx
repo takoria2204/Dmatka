@@ -12,6 +12,7 @@ import {
   Dice1,
   Dice6,
   MessageSquare,
+  Target,
 } from "lucide-react";
 
 const Dashboard = () => {
