@@ -98,22 +98,51 @@ const AdminWithdrawals = () => {
 
   const fetchWithdrawals = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem("admin_token");
-      const response = await fetch(
-        "/api/admin/transactions?type=withdrawal&status=pending",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const url =
+        statusFilter === "all"
+          ? "/api/admin/transactions?type=withdrawal&limit=50"
+          : `/api/admin/transactions?type=withdrawal&status=${statusFilter}&limit=50`;
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("admin_user");
+          navigate("/admin/login");
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
-
-      if (response.ok) {
+      if (data.success) {
         setWithdrawals(data.data.transactions);
-      } else {
-        console.error("Failed to fetch withdrawals:", data.message);
+
+        // Calculate stats
+        const allWithdrawals = data.data.transactions;
+        const stats = {
+          total: allWithdrawals.length,
+          pending: allWithdrawals.filter(
+            (w: Transaction) => w.status === "pending",
+          ).length,
+          approved: allWithdrawals.filter(
+            (w: Transaction) => w.status === "completed",
+          ).length,
+          rejected: allWithdrawals.filter(
+            (w: Transaction) => w.status === "rejected",
+          ).length,
+          totalAmount: allWithdrawals
+            .filter((w: Transaction) => w.status === "completed")
+            .reduce((sum: number, w: Transaction) => sum + w.amount, 0),
+        };
+        setStats(stats);
       }
     } catch (error) {
       console.error("Error fetching withdrawals:", error);
