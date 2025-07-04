@@ -242,28 +242,25 @@ const AddMoney = () => {
         }),
       });
 
-      // Check response status first
-      if (!response.ok) {
-        // Try to read error message if possible
-        let errorMessage = "Failed to submit payment request";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData?.message || errorMessage;
-        } catch (e) {
-          // If we can't parse the error response, use default message
-          console.error("Could not parse error response:", e);
-        }
-        alert(errorMessage);
-        return;
-      }
-
-      // Success case - read response body once
+      // Read response body once and handle both success and error cases
       let data = null;
+      let errorMessage = "Failed to submit payment request";
+
       try {
         data = await response.json();
       } catch (error) {
-        console.error("Error parsing success response:", error);
-        // Even if we can't parse the response, the request was successful
+        console.error("Could not parse response:", error);
+        if (!response.ok) {
+          alert(errorMessage);
+          return;
+        }
+      }
+
+      // Check response status after reading body
+      if (!response.ok) {
+        errorMessage = data?.message || errorMessage;
+        alert(errorMessage);
+        return;
       }
 
       alert(
@@ -539,7 +536,7 @@ const AddMoney = () => {
                               variant="outline"
                               className="text-green-500 border-green-500"
                             >
-                              ₹{gateway.minAmount}-₹{gateway.maxAmount}
+                              ��{gateway.minAmount}-₹{gateway.maxAmount}
                             </Badge>
                           </div>
                         </div>
