@@ -46,6 +46,13 @@ import {
   getWalletStats,
   submitWithdrawalRequest,
 } from "./routes/wallet";
+import {
+  getAllGames,
+  getGameById,
+  placeBet,
+  getUserBets,
+  getGameResults,
+} from "./routes/games";
 import auth from "./middleware/auth";
 import { adminAuth, superAdminAuth } from "./middleware/adminAuth";
 
