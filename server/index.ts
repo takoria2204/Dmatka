@@ -111,6 +111,7 @@ export function createServer() {
   app.get("/api/wallet/transactions", auth, getWalletTransactions);
   app.get("/api/wallet/deposit-history", auth, getDepositHistory);
   app.get("/api/wallet/stats", auth, getWalletStats);
+  app.post("/api/wallet/withdraw", auth, submitWithdrawalRequest);
 
   // Support Ticket routes
   app.get("/api/support/tickets", auth, getUserTickets);
