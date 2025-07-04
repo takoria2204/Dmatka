@@ -238,10 +238,17 @@ const GamePlay = () => {
         betAmount: parseFloat(betData.betAmount),
       });
 
+      const token = localStorage.getItem("matka_token");
+      if (!token) {
+        alert("❌ Please login again to place bet");
+        navigate("/login");
+        return;
+      }
+
       const response = await fetch("/api/games/place-bet", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("matka_token")}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -265,23 +272,70 @@ const GamePlay = () => {
       });
 
       console.log("Response status:", response.status);
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries()),
+      );
 
-      // Read response text first to handle both success and error cases
-      const responseText = await response.text();
-      let data = null;
+      if (!response.ok) {
+        // Handle non-200 responses first
+        let errorData;
+        try {
+          const errorText = await response.text();
+          errorData = errorText ? JSON.parse(errorText) : null;
+        } catch (parseError) {
+          console.error("Could not parse error response:", parseError);
+          errorData = { message: `Server error (${response.status})` };
+        }
 
-      try {
-        data = responseText ? JSON.parse(responseText) : null;
-      } catch (parseError) {
-        console.error("Could not parse response JSON:", parseError);
-        console.log("Raw response:", responseText);
+        const errorMessage =
+          errorData?.message ||
+          `Failed to place bet (Status: ${response.status})`;
+        console.error("Bet placement failed:", errorMessage);
+
+        if (response.status === 401) {
+          alert("❌ Session expired! Please login again.");
+          navigate("/login");
+          return;
+        }
+
+        if (
+          errorMessage.includes("Insufficient") ||
+          errorMessage.includes("balance")
+        ) {
+          alert(
+            "❌ Insufficient Wallet Balance!\n\nPlease add money to your wallet to place this bet.\n\n💰 Click 'Add Money' to recharge your wallet.",
+          );
+        } else if (
+          errorMessage.includes("not open") ||
+          errorMessage.includes("closed")
+        ) {
+          alert("❌ Betting is closed for this game!");
+        } else {
+          alert(`❌ Bet Failed!\n\n${errorMessage}`);
+        }
+        return;
       }
 
-      console.log("Response data:", data);
+      // Handle successful response
+      let data;
+      try {
+        const responseText = await response.text();
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (parseError) {
+        console.error("Could not parse success response:", parseError);
+        alert("❌ Server response error - please check your bet in 'My Bets'");
+        return;
+      }
 
-      if (response.ok) {
-        // Show success popup with bet details
-        const successMessage = `🎉 Bet Placed Successfully!\n\nGame: ${game?.name}\nBet Type: ${selectedBetType.toUpperCase()}\nNumber: ${betData.betNumber}\nAmount: ₹${betData.betAmount}\nPotential Win: ₹${calculatePotentialWinning().toLocaleString()}\n\n✅ Amount deducted from wallet\n📊 Check "My Bets" for updates`;
+      console.log("Success response data:", data);
+
+      if (data?.success) {
+        // Show real success message with actual data from server
+        const actualBalance = data.data?.currentBalance;
+        const potentialWin = data.data?.potentialWinning;
+
+        const successMessage = `🎉 Bet Placed Successfully!\n\nGame: ${game?.name}\nBet Type: ${selectedBetType.toUpperCase()}\nNumber: ${betData.betNumber}\nAmount: ₹${betData.betAmount}\nPotential Win: ₹${potentialWin?.toLocaleString() || calculatePotentialWinning().toLocaleString()}\n\n✅ Amount deducted from wallet\n💰 New Balance: ₹${actualBalance?.toLocaleString() || "Updating..."}\n📊 Check "My Bets" for updates`;
         alert(successMessage);
 
         setShowBetModal(false);
@@ -291,24 +345,18 @@ const GamePlay = () => {
           harufPosition: "first",
           crossingCombination: "",
         });
-        fetchWalletData(); // Refresh wallet balance
-      } else {
-        const errorMessage =
-          data?.message || `Failed to place bet (Status: ${response.status})`;
-        console.error("Bet placement failed:", errorMessage);
 
-        // Show specific error message
-        if (errorMessage.includes("Insufficient")) {
-          alert(
-            "❌ Insufficient Wallet Balance!\n\nPlease add money to your wallet to place this bet.\n\n💰 Click 'Add Money' to recharge your wallet.",
-          );
-        } else {
-          alert(`❌ Bet Failed!\n\n${errorMessage}`);
-        }
+        // Refresh wallet data to show updated balance
+        await fetchWalletData();
+      } else {
+        console.error("Unexpected success response format:", data);
+        alert("❌ Unexpected response - please check your bet in 'My Bets'");
       }
     } catch (error) {
-      console.error("Error placing bet:", error);
-      alert("Network error: Failed to place bet");
+      console.error("Network error placing bet:", error);
+      alert(
+        "❌ Network error: Failed to connect to server. Please check your internet connection and try again.",
+      );
     }
   };
 
