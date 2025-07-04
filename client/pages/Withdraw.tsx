@@ -192,16 +192,44 @@ const Withdraw = () => {
                 htmlFor="amount"
                 className="text-foreground text-lg mb-2 block"
               >
-                Enter the number
+                Withdrawal Amount *
               </Label>
               <Input
                 id="amount"
                 name="amount"
                 type="number"
-                placeholder="₹ 00"
+                placeholder="Enter withdrawal amount"
                 value={formData.amount}
                 onChange={handleChange}
                 className="bg-muted border-border text-foreground text-lg py-3"
+                min="1"
+                max={walletData?.winningBalance || 0}
+                required
+              />
+              {formData.amount &&
+                parseFloat(formData.amount) >
+                  (walletData?.winningBalance || 0) && (
+                  <p className="text-red-500 text-sm mt-1">
+                    Amount exceeds available balance
+                  </p>
+                )}
+            </div>
+
+            <div>
+              <Label
+                htmlFor="accountHolderName"
+                className="text-foreground text-lg mb-2 block"
+              >
+                Account Holder Name *
+              </Label>
+              <Input
+                id="accountHolderName"
+                name="accountHolderName"
+                type="text"
+                placeholder="Enter account holder name"
+                value={formData.accountHolderName}
+                onChange={handleChange}
+                className="bg-muted border-border text-foreground"
                 required
               />
             </div>
@@ -211,13 +239,13 @@ const Withdraw = () => {
                 htmlFor="bankName"
                 className="text-foreground text-lg mb-2 block"
               >
-                Bank name
+                Bank Name *
               </Label>
               <Input
                 id="bankName"
                 name="bankName"
                 type="text"
-                placeholder="Bank name"
+                placeholder="Enter bank name"
                 value={formData.bankName}
                 onChange={handleChange}
                 className="bg-muted border-border text-foreground"
@@ -230,50 +258,14 @@ const Withdraw = () => {
                 htmlFor="accountNumber"
                 className="text-foreground text-lg mb-2 block"
               >
-                Bank account number
+                Bank Account Number *
               </Label>
               <Input
                 id="accountNumber"
                 name="accountNumber"
                 type="text"
-                placeholder="XXXX - XXXX - XXXX - XXXX"
+                placeholder="Enter account number"
                 value={formData.accountNumber}
-                onChange={handleChange}
-                className="bg-muted border-border text-foreground"
-                required
-              />
-            </div>
-
-            <div>
-              <Label
-                htmlFor="name"
-                className="text-foreground text-lg mb-2 block"
-              >
-                Name
-              </Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                value={formData.name}
-                onChange={handleChange}
-                className="bg-muted border-border text-foreground"
-                required
-              />
-            </div>
-
-            <div>
-              <Label
-                htmlFor="mobile"
-                className="text-foreground text-lg mb-2 block"
-              >
-                Mobile number
-              </Label>
-              <Input
-                id="mobile"
-                name="mobile"
-                type="tel"
-                value={formData.mobile}
                 onChange={handleChange}
                 className="bg-muted border-border text-foreground"
                 required
@@ -285,15 +277,17 @@ const Withdraw = () => {
                 htmlFor="ifscCode"
                 className="text-foreground text-lg mb-2 block"
               >
-                IFSC Code
+                IFSC Code *
               </Label>
               <Input
                 id="ifscCode"
                 name="ifscCode"
                 type="text"
+                placeholder="Enter IFSC code"
                 value={formData.ifscCode}
                 onChange={handleChange}
                 className="bg-muted border-border text-foreground"
+                style={{ textTransform: "uppercase" }}
                 required
               />
             </div>
