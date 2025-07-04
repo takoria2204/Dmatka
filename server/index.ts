@@ -133,6 +133,14 @@ export function createServer() {
   app.post("/api/games/place-bet", auth, placeBet);
   app.get("/api/games/:gameId", auth, getGameById);
 
+  // Admin Game routes
+  app.get("/api/admin/games", adminAuth, getAdminGames);
+  app.post("/api/admin/games", adminAuth, createGame);
+  app.put("/api/admin/games/:gameId", adminAuth, updateGame);
+  app.delete("/api/admin/games/:gameId", adminAuth, deleteGame);
+  app.post("/api/admin/games/:gameId/declare-result", adminAuth, declareResult);
+  app.get("/api/admin/games/:gameId/analytics", adminAuth, getGameAnalytics);
+
   // Support Ticket routes
   app.get("/api/support/tickets", auth, getUserTickets);
   app.post("/api/support/tickets", auth, createTicket);
