@@ -202,10 +202,13 @@ export const placeBet: RequestHandler = async (req, res) => {
     });
 
     // Deduct amount from wallet
+    console.log("Deducting amount from wallet. Before:", wallet.depositBalance);
     wallet.depositBalance -= betAmount;
     await wallet.save();
+    console.log("Amount deducted. After:", wallet.depositBalance);
 
     // Create deduction transaction
+    console.log("Creating transaction record");
     const transaction = await Transaction.create({
       userId,
       type: "bet",
@@ -215,11 +218,13 @@ export const placeBet: RequestHandler = async (req, res) => {
       gameId: gameId,
       gameName: game.name,
     });
+    console.log("Transaction created:", transaction._id);
 
     bet.deductionTransactionId = transaction._id as mongoose.Types.ObjectId;
     await bet.save();
+    console.log("Bet saved with ID:", bet._id);
 
-    res.status(201).json({
+    const responseData = {
       success: true,
       message: "Bet placed successfully",
       data: {
@@ -227,10 +232,13 @@ export const placeBet: RequestHandler = async (req, res) => {
         currentBalance: wallet.depositBalance,
         potentialWinning,
       },
-    });
+    };
+    console.log("Sending success response:", responseData);
+
+    res.status(201).json(responseData);
   } catch (error) {
     console.error("Place bet error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
