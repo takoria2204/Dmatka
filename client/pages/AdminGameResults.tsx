@@ -402,88 +402,257 @@ const AdminGameResults = () => {
           </CardContent>
         </Card>
 
-        {/* Recent Results */}
+        {/* Game Results Section */}
         <Card className="bg-[#2a2a2a] border-gray-700">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <CheckCircle className="h-5 w-5" />
-              Recent Results
+              <Trophy className="h-5 w-5" />
+              Game Results
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {results.length === 0 ? (
+            {/* Tabs for filtering */}
+            <div className="flex space-x-1 mb-6 bg-gray-800 p-1 rounded-lg">
+              {[
+                {
+                  key: "pending",
+                  label: `Pending (${stats.pendingCount})`,
+                  color: "text-yellow-400",
+                },
+                {
+                  key: "declared",
+                  label: `Declared (${stats.declaredCount})`,
+                  color: "text-green-400",
+                },
+                {
+                  key: "cancelled",
+                  label: `Cancelled (${stats.cancelledCount})`,
+                  color: "text-red-400",
+                },
+                {
+                  key: "all",
+                  label: `All (${stats.totalResults})`,
+                  color: "text-blue-400",
+                },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === tab.key
+                      ? "bg-gray-700 text-white"
+                      : `hover:bg-gray-700 ${tab.color}`
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Results Display */}
+            {activeTab === "pending" && (
+              <div className="space-y-4">
+                {games.filter(
+                  (game) =>
+                    game.currentStatus === "open" ||
+                    game.currentStatus === "closed",
+                ).length === 0 ? (
+                  <div className="text-center py-8">
+                    <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400">No pending results found</p>
+                  </div>
+                ) : (
+                  games
+                    .filter(
+                      (game) =>
+                        game.currentStatus === "open" ||
+                        game.currentStatus === "closed",
+                    )
+                    .map((game) => (
+                      <Card
+                        key={game._id}
+                        className="bg-[#1a1a1a] border-gray-600"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <Badge className="bg-yellow-500 text-black">
+                                  PENDING
+                                </Badge>
+                                <h3 className="text-white font-semibold text-lg">
+                                  {game.name}
+                                </h3>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <p className="text-gray-400">Date & Time</p>
+                                  <p className="text-white">
+                                    {new Date().toLocaleDateString()}
+                                  </p>
+                                  <p className="text-gray-300">
+                                    {game.startTime} - {game.endTime}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">
+                                    Winning Number
+                                  </p>
+                                  <p className="text-yellow-400 font-bold text-lg">
+                                    -
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">
+                                    Bets & Winning
+                                  </p>
+                                  <p className="text-white">- bets</p>
+                                  <p className="text-gray-300">₹-</p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">Profit</p>
+                                  <p className="text-white">₹-</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                onClick={() => openDeclareModal(game)}
+                                className="bg-green-500 text-white hover:bg-green-600"
+                                size="sm"
+                              >
+                                Declare
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                                size="sm"
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                )}
+              </div>
+            )}
+
+            {(activeTab === "declared" || activeTab === "all") && (
+              <div className="space-y-4">
+                {results.filter(
+                  (result) =>
+                    activeTab === "all" || result.status === "declared",
+                ).length === 0 ? (
+                  <div className="text-center py-8">
+                    <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-400">No results found</p>
+                  </div>
+                ) : (
+                  results
+                    .filter(
+                      (result) =>
+                        activeTab === "all" || result.status === "declared",
+                    )
+                    .slice(0, 20)
+                    .map((result) => (
+                      <Card
+                        key={result._id}
+                        className="bg-[#1a1a1a] border-gray-600"
+                      >
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <Badge className="bg-green-500 text-white">
+                                  DECLARED
+                                </Badge>
+                                <h3 className="text-white font-semibold text-lg">
+                                  {result.gameName}
+                                </h3>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                                <div>
+                                  <p className="text-gray-400">Date & Time</p>
+                                  <p className="text-white">
+                                    {formatDate(
+                                      result.declaredAt || result.resultDate,
+                                    )}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">
+                                    Winning Number
+                                  </p>
+                                  <div className="space-y-1">
+                                    {result.jodiResult && (
+                                      <p className="text-yellow-400 font-bold text-lg">
+                                        {result.jodiResult}
+                                      </p>
+                                    )}
+                                    {result.harufResult && (
+                                      <p className="text-yellow-400 font-bold">
+                                        Haruf: {result.harufResult}
+                                      </p>
+                                    )}
+                                    {result.crossingResult && (
+                                      <p className="text-yellow-400 font-bold">
+                                        Crossing: {result.crossingResult}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">
+                                    Bets & Winning
+                                  </p>
+                                  <p className="text-white">
+                                    {result.totalBets} bets
+                                  </p>
+                                  <p className="text-gray-300">
+                                    ₹
+                                    {result.totalWinningAmount.toLocaleString()}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-gray-400">Profit</p>
+                                  <p
+                                    className={`font-bold ${result.netProfit >= 0 ? "text-green-400" : "text-red-400"}`}
+                                  >
+                                    ₹{result.netProfit.toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
+                                size="sm"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                                size="sm"
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                )}
+              </div>
+            )}
+
+            {activeTab === "cancelled" && (
               <div className="text-center py-8">
                 <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400">No results declared yet</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {results.slice(0, 10).map((result) => (
-                  <Card
-                    key={result._id}
-                    className="bg-[#1a1a1a] border-gray-600"
-                  >
-                    <CardContent className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div>
-                          <h3 className="text-white font-semibold">
-                            {result.gameName}
-                          </h3>
-                          <p className="text-gray-400 text-sm capitalize">
-                            {result.gameType}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            {formatDate(result.declaredAt || result.resultDate)}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-gray-400 text-sm">Results</p>
-                          {result.jodiResult && (
-                            <p className="text-yellow-400 font-bold text-lg">
-                              Jodi: {result.jodiResult}
-                            </p>
-                          )}
-                          {result.harufResult && (
-                            <p className="text-yellow-400 font-bold text-lg">
-                              Haruf: {result.harufResult}
-                            </p>
-                          )}
-                          {result.crossingResult && (
-                            <p className="text-yellow-400 font-bold text-lg">
-                              Crossing: {result.crossingResult}
-                            </p>
-                          )}
-                        </div>
-
-                        <div className="text-center">
-                          <p className="text-gray-400 text-sm">Total Bets</p>
-                          <p className="text-white font-bold text-lg">
-                            {result.totalBets}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            ₹{result.totalBetAmount.toLocaleString()}
-                          </p>
-                        </div>
-
-                        <div className="text-center">
-                          <p className="text-gray-400 text-sm">
-                            Platform Profit
-                          </p>
-                          <p
-                            className={`font-bold text-lg ${result.netProfit >= 0 ? "text-green-400" : "text-red-400"}`}
-                          >
-                            ₹{result.netProfit.toLocaleString()}
-                          </p>
-                          <p className="text-gray-400 text-sm">
-                            Winners: ₹
-                            {result.totalWinningAmount.toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                <p className="text-gray-400">No cancelled results found</p>
               </div>
             )}
           </CardContent>
