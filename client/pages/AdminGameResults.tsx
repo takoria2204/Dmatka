@@ -134,33 +134,36 @@ const AdminGameResults = () => {
         const resultsList = resultsData.data.results || [];
         setResults(resultsList);
 
-        // Calculate real-time statistics
-        const today = new Date().toISOString().split("T")[0];
-        const todayResults = resultsList.filter((r: GameResult) =>
-          r.resultDate.startsWith(today),
-        );
+        // Calculate real-time statistics after games are loaded
+        setTimeout(() => {
+          const today = new Date().toISOString().split("T")[0];
+          const todayResults = resultsList.filter((r: GameResult) =>
+            r.resultDate.startsWith(today),
+          );
 
-        const pendingGames = games.filter(
-          (g: Game) =>
-            g.currentStatus === "open" || g.currentStatus === "closed",
-        ).length;
+          const currentGames = gamesData.data.games || [];
+          const pendingGames = currentGames.filter(
+            (g: Game) =>
+              g.currentStatus === "open" || g.currentStatus === "closed",
+          ).length;
 
-        const declaredToday = todayResults.filter(
-          (r: GameResult) => r.status === "declared",
-        ).length;
+          const declaredToday = todayResults.filter(
+            (r: GameResult) => r.status === "declared",
+          ).length;
 
-        const todayProfit = todayResults.reduce(
-          (sum: number, r: GameResult) => sum + (r.netProfit || 0),
-          0,
-        );
+          const todayProfit = todayResults.reduce(
+            (sum: number, r: GameResult) => sum + (r.netProfit || 0),
+            0,
+          );
 
-        setStats({
-          totalResults: resultsList.length,
-          pendingCount: pendingGames,
-          declaredCount: declaredToday,
-          cancelledCount: 0, // Can be calculated if you have cancelled results
-          todayProfit: todayProfit,
-        });
+          setStats({
+            totalResults: resultsList.length,
+            pendingCount: pendingGames,
+            declaredCount: declaredToday,
+            cancelledCount: 0, // Can be calculated if you have cancelled results
+            todayProfit: todayProfit,
+          });
+        }, 100);
       }
     } catch (error) {
       console.error("Error fetching data:", error);
