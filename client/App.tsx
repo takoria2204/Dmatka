@@ -139,14 +139,7 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
-    <Route
-      path="/game/:gameName"
-      element={
-        <ProtectedRoute>
-          <GameInterface />
-        </ProtectedRoute>
-      }
-    />
+
     <Route
       path="/charts"
       element={
