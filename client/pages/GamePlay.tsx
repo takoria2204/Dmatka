@@ -415,7 +415,11 @@ const GamePlay = () => {
             title: "Betting Closed",
             description: "This game is not accepting bets right now",
           });
-        } else if (response.status === 401) {
+        } else if (
+          data?.type === "authentication_error" ||
+          errorMessage.includes("login") ||
+          errorMessage.includes("unauthorized")
+        ) {
           toast({
             variant: "destructive",
             title: "Session Expired",
