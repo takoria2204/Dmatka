@@ -57,6 +57,7 @@ import {
   updateGame,
   deleteGame,
   declareResult,
+  forceGameStatus,
   getGameAnalytics,
 } from "./routes/games";
 import auth from "./middleware/auth";
