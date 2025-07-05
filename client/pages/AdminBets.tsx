@@ -166,36 +166,35 @@ const AdminBets = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusBadge = (status: string) => {
     switch (status) {
-      case "won":
-        return "bg-green-500";
-      case "lost":
-        return "bg-red-500";
       case "pending":
-        return "bg-yellow-500";
-      case "cancelled":
-        return "bg-gray-500";
-      case "refunded":
-        return "bg-blue-500";
-      default:
-        return "bg-gray-500";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
+        return (
+          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+            <Clock className="h-3 w-3 mr-1" />
+            Pending
+          </Badge>
+        );
       case "won":
-        return <CheckCircle className="h-4 w-4" />;
+        return (
+          <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Won
+          </Badge>
+        );
       case "lost":
-        return <XCircle className="h-4 w-4" />;
-      case "pending":
-        return <Clock className="h-4 w-4" />;
-      case "cancelled":
-      case "refunded":
-        return <AlertCircle className="h-4 w-4" />;
+        return (
+          <Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+            <XCircle className="h-3 w-3 mr-1" />
+            Lost
+          </Badge>
+        );
       default:
-        return null;
+        return (
+          <Badge className="bg-gray-500/20 text-gray-400 border-gray-500/30">
+            {status}
+          </Badge>
+        );
     }
   };
 
@@ -281,6 +280,7 @@ const AdminBets = () => {
               />
               Refresh
             </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -356,155 +356,172 @@ const AdminBets = () => {
 
         {/* Filters */}
         <Card className="bg-[#2a2a2a] border-gray-700 mb-6">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-4">
-              <label className="text-gray-300">Filter by Status:</label>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-48 bg-[#1a1a1a] border-gray-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Bets</SelectItem>
-                  <SelectItem value="pending">Pending Only</SelectItem>
-                  <SelectItem value="won">Won Only</SelectItem>
-                  <SelectItem value="lost">Lost Only</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
+          <CardHeader>
+            <CardTitle className="text-white">Filters</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">
+                  Game Type
+                </label>
+                <Select
+                  value={gameTypeFilter}
+                  onValueChange={setGameTypeFilter}
+                >
+                  <SelectTrigger className="bg-[#1a1a1a] border-gray-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Games</SelectItem>
+                    <SelectItem value="jodi">Jodi</SelectItem>
+                    <SelectItem value="haruf">Haruf</SelectItem>
+                    <SelectItem value="crossing">Crossing</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-              <label className="text-gray-300">Filter by Game Type:</label>
-              <Select value={gameTypeFilter} onValueChange={setGameTypeFilter}>
-                <SelectTrigger className="w-48 bg-[#1a1a1a] border-gray-600 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="jodi">Jodi</SelectItem>
-                  <SelectItem value="haruf">Haruf</SelectItem>
-                  <SelectItem value="crossing">Crossing</SelectItem>
-                </SelectContent>
-              </Select>
+              <div>
+                <label className="text-sm text-gray-400 mb-2 block">
+                  Status
+                </label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="bg-[#1a1a1a] border-gray-600 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="won">Won</SelectItem>
+                    <SelectItem value="lost">Lost</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex items-end">
+                <Button
+                  onClick={fetchBets}
+                  className="w-full bg-yellow-500 text-black hover:bg-yellow-600"
+                >
+                  Apply Filters
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Bets List */}
+        {/* Bets Table */}
         <Card className="bg-[#2a2a2a] border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white flex items-center gap-2">
-              <Trophy className="h-5 w-5" />
-              All User Bets ({bets.length})
+            <CardTitle className="text-white">
+              All Bets ({bets.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
             {bets.length === 0 ? (
-              <div className="text-center py-12">
-                <Trophy className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-400 text-lg mb-2">No bets found</p>
-                <p className="text-gray-500 text-sm">
-                  User betting activity will appear here
+              <div className="text-center py-8">
+                <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">
+                  No Bets Found
+                </h3>
+                <p className="text-gray-400">
+                  No bets match your current filters.
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
-                {bets.map((bet) => (
-                  <Card key={bet._id} className="bg-[#1a1a1a] border-gray-600">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-3">
-                            <Badge className={getStatusColor(bet.status)}>
-                              <div className="flex items-center gap-1">
-                                {getStatusIcon(bet.status)}
-                                <span className="capitalize">{bet.status}</span>
-                              </div>
-                            </Badge>
-                            <span className="text-sm text-gray-400">
-                              {formatDate(bet.betPlacedAt)}
-                            </span>
-                          </div>
-
-                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-gray-300">User</TableHead>
+                      <TableHead className="text-gray-300">
+                        Game & Type
+                      </TableHead>
+                      <TableHead className="text-gray-300">Number</TableHead>
+                      <TableHead className="text-gray-300">Amount</TableHead>
+                      <TableHead className="text-gray-300">
+                        Potential Win
+                      </TableHead>
+                      <TableHead className="text-gray-300">Status</TableHead>
+                      <TableHead className="text-gray-300">
+                        Date & Time
+                      </TableHead>
+                      <TableHead className="text-gray-300">Result</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {bets.map((bet) => (
+                      <TableRow key={bet._id} className="border-gray-700">
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4 text-gray-400" />
                             <div>
-                              <p className="text-white font-semibold flex items-center gap-2">
-                                <User className="h-4 w-4" />
+                              <p className="font-medium text-white">
                                 {bet.userId.fullName}
                               </p>
-                              <p className="text-gray-400 text-sm">
+                              <p className="text-sm text-gray-400">
                                 {bet.userId.mobile}
                               </p>
                             </div>
-
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {getBetTypeIcon(bet.betType)}
                             <div>
-                              <p className="text-white font-semibold flex items-center gap-2">
-                                {getBetTypeIcon(bet.betType)}
+                              <p className="font-medium text-white">
                                 {bet.gameName}
                               </p>
-                              <p className="text-gray-400 text-sm capitalize">
-                                {bet.betType} • {bet.gameType}
+                              <p className="text-sm text-gray-400">
+                                {bet.betType.toUpperCase()}
                               </p>
-                              <p className="text-yellow-400 text-sm font-bold">
-                                Number: {bet.betNumber}
-                              </p>
-                            </div>
-
-                            <div className="text-center">
-                              <p className="text-gray-400 text-xs">
-                                Bet Amount
-                              </p>
-                              <p className="text-white font-bold text-lg">
-                                ₹{bet.betAmount.toLocaleString()}
-                              </p>
-                              <p className="text-gray-400 text-xs">
-                                Potential: ₹
-                                {bet.potentialWinning.toLocaleString()}
-                              </p>
-                            </div>
-
-                            <div className="text-center">
-                              <p className="text-gray-400 text-xs">
-                                {bet.status === "won"
-                                  ? "Actual Winning"
-                                  : "Status"}
-                              </p>
-                              {bet.status === "won" ? (
-                                <p className="text-green-400 font-bold text-lg">
-                                  ₹{(bet.winningAmount || 0).toLocaleString()}
-                                </p>
-                              ) : bet.status === "lost" ? (
-                                <p className="text-red-400 font-bold text-lg">
-                                  Lost
-                                </p>
-                              ) : (
-                                <p className="text-yellow-400 font-bold text-lg">
-                                  Pending
-                                </p>
-                              )}
                             </div>
                           </div>
-
-                          {bet.betData && (
-                            <div className="mt-3 p-2 bg-gray-800 rounded text-sm">
-                              {bet.betType === "haruf" &&
-                                bet.betData.harufPosition && (
-                                  <span className="text-gray-300">
-                                    Position: {bet.betData.harufPosition} digit
-                                  </span>
-                                )}
-                              {bet.betType === "crossing" &&
-                                bet.betData.crossingCombination && (
-                                  <span className="text-gray-300">
-                                    Combination:{" "}
-                                    {bet.betData.crossingCombination}
-                                  </span>
-                                )}
-                            </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className="font-mono bg-gray-700 text-yellow-400 border-yellow-400/30"
+                          >
+                            {bet.betNumber}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-semibold text-red-400">
+                            ₹{bet.betAmount.toLocaleString()}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-green-400 font-semibold">
+                            ₹{bet.potentialWinning.toLocaleString()}
+                          </span>
+                        </TableCell>
+                        <TableCell>{getStatusBadge(bet.status)}</TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <p className="text-white">
+                              {new Date(bet.betPlacedAt).toLocaleDateString()}
+                            </p>
+                            <p className="text-gray-400">
+                              {new Date(bet.betPlacedAt).toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {bet.status === "won" && bet.winningAmount ? (
+                            <span className="font-bold text-green-400">
+                              +₹{bet.winningAmount.toLocaleString()}
+                            </span>
+                          ) : bet.status === "lost" ? (
+                            <span className="text-red-400">Lost</span>
+                          ) : (
+                            <span className="text-yellow-400">Pending</span>
                           )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
