@@ -74,9 +74,33 @@ export const getGameById: RequestHandler = async (req, res) => {
       return;
     }
 
+    // Calculate current status
+    let currentStatus = "";
+    if (game.forcedStatus && game.isActive) {
+      currentStatus = game.forcedStatus;
+    } else if (game.isActive) {
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
+
+      if (currentTime >= game.startTime && currentTime < game.endTime) {
+        currentStatus = "open";
+      } else if (currentTime >= game.endTime && currentTime < game.resultTime) {
+        currentStatus = "closed";
+      } else if (currentTime >= game.resultTime) {
+        currentStatus = "result_declared";
+      } else {
+        currentStatus = "waiting";
+      }
+    } else {
+      currentStatus = "waiting";
+    }
+
     res.json({
       success: true,
-      data: game,
+      data: {
+        ...game.toObject(),
+        currentStatus,
+      },
     });
   } catch (error) {
     console.error("Get game by ID error:", error);
@@ -208,7 +232,7 @@ export const placeBet: RequestHandler = async (req, res) => {
       // Check sufficient balance
       if (wallet.depositBalance < betAmount) {
         throw new Error(
-          `Insufficient wallet balance. Current: ₹${wallet.depositBalance}, Required: ₹${betAmount}`,
+          `Insufficient wallet balance. Current: ���${wallet.depositBalance}, Required: ₹${betAmount}`,
         );
       }
 
