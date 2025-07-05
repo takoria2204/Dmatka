@@ -351,7 +351,7 @@ const GamePlay = () => {
         }
       }
 
-      if (response.ok && data?.success) {
+      if (data?.success) {
         // Success - show success toast
         toast({
           title: "✅ Bet Placed Successfully!",
