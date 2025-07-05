@@ -72,6 +72,8 @@ const AdminBets = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [gameTypeFilter, setGameTypeFilter] = useState("all");
   const [refreshing, setRefreshing] = useState(false);
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const navigate = useNavigate();
 
   useEffect(() => {
