@@ -298,16 +298,36 @@ const AdminGameResults = () => {
               Game Results Management
             </h1>
           </div>
-          <Button
-            onClick={fetchData}
-            className="bg-green-500 text-white hover:bg-green-600"
-            disabled={loading}
-          >
-            <RefreshCw
-              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={fetchData}
+              className="bg-green-500 text-white hover:bg-green-600"
+              disabled={loading}
+            >
+              <RefreshCw
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </Button>
+            <Button
+              onClick={() => {
+                // Show first available pending game for quick declaration
+                const pendingGame = games.find(
+                  (g) =>
+                    g.currentStatus === "open" || g.currentStatus === "closed",
+                );
+                if (pendingGame) {
+                  openDeclareModal(pendingGame);
+                } else {
+                  alert("No pending games available for result declaration");
+                }
+              }}
+              className="bg-yellow-500 text-black hover:bg-yellow-600"
+            >
+              <Trophy className="h-4 w-4 mr-2" />
+              Add Result
+            </Button>
+          </div>
         </div>
 
         {/* Statistics Cards */}
