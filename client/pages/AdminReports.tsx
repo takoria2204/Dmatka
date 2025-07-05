@@ -175,11 +175,24 @@ const AdminReports = () => {
         {
           headers: { Authorization: `Bearer ${token}` },
         },
-      );
+      ).catch(() => null);
 
-      if (response.ok) {
-        const data = await response.json();
-        setReportData(data.data || reportData);
+      if (response && response.ok) {
+        try {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const data = await response.json();
+            setReportData(data.data || reportData);
+          } else {
+            console.log(
+              "Reports API returned non-JSON response, using mock data",
+            );
+          }
+        } catch (parseError) {
+          console.log("Failed to parse reports response, using mock data");
+        }
+      } else {
+        console.log("Reports API not available, using mock data");
       }
     } catch (error) {
       console.error("Error fetching report data:", error);
