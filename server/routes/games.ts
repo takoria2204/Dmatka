@@ -675,7 +675,9 @@ export const declareResult: RequestHandler = async (req, res) => {
         $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
       },
       status: "pending",
-    });
+    }).populate("userId", "fullName mobile");
+
+    console.log(`📊 Found ${bets.length} pending bets for processing`);
 
     // Calculate winners and update bets
     let totalWinningAmount = 0;
