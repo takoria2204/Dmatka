@@ -310,19 +310,45 @@ const GamePlay = () => {
         body: JSON.stringify(betPayload),
       });
 
-      // Read response only once to avoid "body stream already read" error
+      console.log("📊 Response status:", response.status);
+
+      // Handle response safely
       let data;
-      try {
-        data = await response.json();
-        console.log("📊 Response:", data);
-      } catch (error) {
-        console.error("❌ Failed to parse response:", error);
-        toast({
-          variant: "destructive",
-          title: "Server Error",
-          description: "Invalid response from server",
-        });
-        return;
+      if (response.ok) {
+        try {
+          // Clone response to avoid stream consumption issues
+          const responseClone = response.clone();
+          data = await responseClone.json();
+          console.log("📊 Response data:", data);
+        } catch (parseError) {
+          console.error("❌ Failed to parse success response:", parseError);
+          // If JSON parsing fails, try reading as text
+          try {
+            const textResponse = await response.text();
+            console.log("📊 Response as text:", textResponse);
+            // Try to manually parse or handle as success if it's empty
+            if (!textResponse) {
+              data = { success: true, message: "Bet placed successfully" };
+            } else {
+              data = { success: false, message: "Invalid response format" };
+            }
+          } catch (textError) {
+            console.error("❌ Failed to read response as text:", textError);
+            data = { success: false, message: "Server communication error" };
+          }
+        }
+      } else {
+        // Handle error responses
+        try {
+          data = await response.json();
+        } catch (parseError) {
+          console.error("❌ Failed to parse error response:", parseError);
+          data = {
+            success: false,
+            message: `Server error (${response.status})`,
+            type: "server_error",
+          };
+        }
       }
 
       if (response.ok && data?.success) {
