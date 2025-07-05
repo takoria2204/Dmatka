@@ -301,46 +301,58 @@ const GamePlay = () => {
 
       console.log("🎯 Placing bet:", betPayload);
 
-      const response = await fetch("/api/games/place-bet", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(betPayload),
+      // Use XMLHttpRequest to avoid fetch stream conflicts
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", "/api/games/place-bet", true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+        xhr.onload = function () {
+          console.log("📊 XHR status:", xhr.status);
+          console.log("📊 XHR response:", xhr.responseText);
+
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const responseData = JSON.parse(xhr.responseText);
+              resolve(responseData);
+            } catch (parseError) {
+              console.error("❌ Failed to parse JSON:", parseError);
+              resolve({
+                success: false,
+                message: "Invalid response format",
+                type: "parse_error",
+              });
+            }
+          } else {
+            try {
+              const errorData = JSON.parse(xhr.responseText);
+              resolve(errorData);
+            } catch (parseError) {
+              resolve({
+                success: false,
+                message: `Server error (${xhr.status})`,
+                type: "server_error",
+              });
+            }
+          }
+        };
+
+        xhr.onerror = function () {
+          console.error("❌ XHR network error");
+          reject(new Error("Network error"));
+        };
+
+        xhr.ontimeout = function () {
+          console.error("❌ XHR timeout");
+          reject(new Error("Request timeout"));
+        };
+
+        xhr.timeout = 30000; // 30 second timeout
+        xhr.send(JSON.stringify(betPayload));
       });
 
-      console.log("📊 Response status:", response.status);
-      console.log(
-        "📊 Response headers:",
-        Object.fromEntries(response.headers.entries()),
-      );
-
-      // Read response text first, then parse
-      const responseText = await response.text();
-      console.log("📊 Response text:", responseText);
-
-      let data;
-      if (responseText) {
-        try {
-          data = JSON.parse(responseText);
-          console.log("📊 Parsed data:", data);
-        } catch (parseError) {
-          console.error("❌ Failed to parse JSON:", parseError);
-          data = {
-            success: false,
-            message: "Invalid JSON response from server",
-            type: "parse_error",
-          };
-        }
-      } else {
-        console.log("📊 Empty response received");
-        data = {
-          success: false,
-          message: "Empty response from server",
-          type: "empty_response",
-        };
-      }
+      console.log("📊 Final data:", data);
 
       if (data?.success) {
         // Success - show success toast
