@@ -15,7 +15,6 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import MatkaGames from "./pages/MatkaGames";
 import GamesHub from "./pages/GamesHub";
-import GameInterface from "./pages/GameInterface";
 import Charts from "./pages/Charts";
 import Wallet from "./pages/Wallet";
 import AddMoney from "./pages/AddMoney";
