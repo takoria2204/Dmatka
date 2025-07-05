@@ -701,6 +701,10 @@ export const declareResult: RequestHandler = async (req, res) => {
     for (const bet of bets) {
       let isWinner = false;
 
+      console.log(
+        `🎲 Processing bet: ${bet.betNumber} (${bet.betType}) by ${bet.userId?.fullName}`,
+      );
+
       // Update bet distribution
       betDistribution[bet.betType as keyof typeof betDistribution].totalBets++;
       betDistribution[
@@ -711,19 +715,33 @@ export const declareResult: RequestHandler = async (req, res) => {
       switch (bet.betType) {
         case "jodi":
           isWinner = bet.betNumber === jodiResult;
+          console.log(
+            `   Jodi check: ${bet.betNumber} === ${jodiResult} = ${isWinner}`,
+          );
           break;
         case "haruf":
           if (bet.betData?.harufPosition === "first") {
             isWinner = bet.betNumber === jodiResult?.charAt(0);
+            console.log(
+              `   Haruf (first) check: ${bet.betNumber} === ${jodiResult?.charAt(0)} = ${isWinner}`,
+            );
           } else if (bet.betData?.harufPosition === "last") {
             isWinner = bet.betNumber === jodiResult?.charAt(1);
+            console.log(
+              `   Haruf (last) check: ${bet.betNumber} === ${jodiResult?.charAt(1)} = ${isWinner}`,
+            );
           } else {
             isWinner = bet.betNumber === harufResult;
+            console.log(
+              `   Haruf check: ${bet.betNumber} === ${harufResult} = ${isWinner}`,
+            );
           }
           break;
         case "crossing":
-          // Implement crossing logic here
           isWinner = bet.betNumber === crossingResult;
+          console.log(
+            `   Crossing check: ${bet.betNumber} === ${crossingResult} = ${isWinner}`,
+          );
           break;
       }
 
