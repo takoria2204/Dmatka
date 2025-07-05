@@ -38,6 +38,10 @@ import GamePlay from "./pages/GamePlay";
 import MyBets from "./pages/MyBets";
 import AdminGameResults from "./pages/AdminGameResults";
 import AdminGameManagement from "./pages/AdminGameManagement";
+import AdminManagement from "./pages/AdminManagement";
+import AdminSettings from "./pages/AdminSettings";
+import AdminReports from "./pages/AdminReports";
+import AdminTesting from "./pages/AdminTesting";
 import TestResultDeclaration from "./pages/TestResultDeclaration";
 import NotFound from "./pages/NotFound";
 
