@@ -315,6 +315,38 @@ const AppRoutes = () => (
       }
     />
     <Route
+      path="/admin/management"
+      element={
+        <AdminProtectedRoute>
+          <AdminManagement />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/settings"
+      element={
+        <AdminProtectedRoute>
+          <AdminSettings />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/reports"
+      element={
+        <AdminProtectedRoute>
+          <AdminReports />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/testing"
+      element={
+        <AdminProtectedRoute>
+          <AdminTesting />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
       path="/admin/support"
       element={
         <AdminProtectedRoute>
