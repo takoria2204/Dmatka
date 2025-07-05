@@ -204,30 +204,59 @@ const GamePlay = () => {
 
   const handlePlaceBet = () => {
     if (!betData.betNumber || !betData.betAmount) {
-      alert("Please select a number and enter bet amount");
+      toast({
+        variant: "destructive",
+        title: "Incomplete Bet Details",
+        description: "Please select a number and enter bet amount",
+      });
       return;
     }
 
     const amount = parseFloat(betData.betAmount);
     if (isNaN(amount) || amount <= 0) {
-      alert("Please enter a valid bet amount");
+      toast({
+        variant: "destructive",
+        title: "Invalid Amount",
+        description: "Please enter a valid bet amount",
+      });
       return;
     }
 
     if (!game) return;
 
     if (amount < game.minBet) {
-      alert(`Minimum bet amount is ₹${game.minBet}`);
+      toast({
+        variant: "destructive",
+        title: "Amount Too Low",
+        description: `Minimum bet amount is ₹${game.minBet}`,
+      });
       return;
     }
 
     if (amount > game.maxBet) {
-      alert(`Maximum bet amount is ₹${game.maxBet}`);
+      toast({
+        variant: "destructive",
+        title: "Amount Too High",
+        description: `Maximum bet amount is ₹${game.maxBet}`,
+      });
       return;
     }
 
     if (!wallet || wallet.depositBalance < amount) {
-      alert("Insufficient wallet balance");
+      toast({
+        variant: "destructive",
+        title: "Insufficient Balance",
+        description: `Add money to your wallet. Current balance: ₹${wallet?.depositBalance || 0}`,
+        action: (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/add-money")}
+          >
+            Add Money
+          </Button>
+        ),
+      });
       return;
     }
 
