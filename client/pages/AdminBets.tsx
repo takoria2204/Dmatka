@@ -148,6 +148,7 @@ const AdminBets = () => {
           lostBets: betsData.filter((bet: Bet) => bet.status === "lost").length,
         };
         setStats(stats);
+        setLastUpdated(new Date());
       }
     } catch (error) {
       console.error("Error fetching bets:", error);
