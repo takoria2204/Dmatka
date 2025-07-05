@@ -228,13 +228,16 @@ const AdminGameResults = () => {
         });
         fetchData();
       } else {
+        console.error("❌ Failed to declare result:", data);
         alert(
-          `❌ Failed to declare result!\n\n${data.message || "Unknown error occurred"}`,
+          `❌ Failed to declare result: ${data.message || "Unknown error occurred"}`,
         );
       }
     } catch (error) {
       console.error("Error declaring result:", error);
-      alert("Failed to declare result");
+      alert(
+        "❌ Network error: Failed to declare result. Please check your connection and try again.",
+      );
     } finally {
       setDeclaring(false);
     }
