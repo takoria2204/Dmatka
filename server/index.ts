@@ -144,6 +144,54 @@ export function createServer() {
   app.get("/api/admin/games/:gameId/analytics", adminAuth, getGameAnalytics);
   app.get("/api/admin/game-results", adminAuth, getGameResults);
 
+  // Admin Management API endpoints (basic implementation)
+  app.get("/api/admin/management/admins", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Admin management API endpoint",
+      data: [], // Will be populated when backend is implemented
+    });
+  });
+
+  app.get("/api/admin/management/activities", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Activities API endpoint",
+      data: [], // Will be populated when backend is implemented
+    });
+  });
+
+  app.get("/api/admin/settings", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Settings API endpoint",
+      data: null, // Will be populated when backend is implemented
+    });
+  });
+
+  app.put("/api/admin/settings", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Settings updated successfully",
+    });
+  });
+
+  app.get("/api/admin/reports", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Reports API endpoint",
+      data: null, // Will be populated when backend is implemented
+    });
+  });
+
+  app.get("/api/admin/system/health", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "System health API endpoint",
+      data: null, // Will be populated when backend is implemented
+    });
+  });
+
   // Test endpoint to manually declare result for debugging
   app.post("/api/test/declare-result", async (req, res) => {
     try {
