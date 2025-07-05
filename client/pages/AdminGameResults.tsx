@@ -160,9 +160,19 @@ const AdminGameResults = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert(
-          `Result declared successfully! ${data.data.winnersCount} winners found. Platform profit: ₹${data.data.netProfit.toLocaleString()}`,
-        );
+        const result = data.data;
+        const successMessage = `🎉 Result Declared Successfully!
+
+📊 Game: ${selectedGame.name}
+🎯 Result: ${resultData.jodiResult}${resultData.harufResult ? ` (Haruf: ${resultData.harufResult})` : ""}${resultData.crossingResult ? ` (Crossing: ${resultData.crossingResult})` : ""}
+
+👥 Winners: ${result.winnersCount} players
+💰 Total Winnings Paid: ₹${result.totalWinningAmount.toLocaleString()}
+📈 Platform Profit: ₹${result.netProfit.toLocaleString()}
+
+✅ All winnings have been credited to winners' accounts!`;
+
+        alert(successMessage);
         setShowDeclareModal(false);
         setSelectedGame(null);
         setResultData({
@@ -173,7 +183,9 @@ const AdminGameResults = () => {
         });
         fetchData();
       } else {
-        alert(data.message || "Failed to declare result");
+        alert(
+          `❌ Failed to declare result!\n\n${data.message || "Unknown error occurred"}`,
+        );
       }
     } catch (error) {
       console.error("Error declaring result:", error);
