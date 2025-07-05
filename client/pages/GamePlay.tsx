@@ -356,10 +356,10 @@ const GamePlay = () => {
         await fetchWalletData();
       } else {
         // Error handling based on response
-        const errorMessage = data.message || "Failed to place bet";
+        const errorMessage = data?.message || "Failed to place bet";
 
         if (
-          data.type === "insufficient_balance" ||
+          data?.type === "insufficient_balance" ||
           errorMessage.includes("Insufficient")
         ) {
           toast({
