@@ -114,22 +114,62 @@ const AdminGameResults = () => {
         fetch("/api/admin/games", {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch("/api/admin/game-results", {
+        fetch("/api/admin/game-results?limit=50", {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
 
       if (gamesResponse.ok) {
         const gamesData = await gamesResponse.json();
-        setGames(gamesData.data.games || []);
+        const gamesList = gamesData.data.games || [];
+        setGames(gamesList);
       }
 
       if (resultsResponse.ok) {
         const resultsData = await resultsResponse.json();
-        setResults(resultsData.data.results || []);
+        const resultsList = resultsData.data.results || [];
+        setResults(resultsList);
+
+        // Calculate real-time statistics
+        const today = new Date().toISOString().split("T")[0];
+        const todayResults = resultsList.filter((r: GameResult) =>
+          r.resultDate.startsWith(today),
+        );
+
+        const pendingGames = games.filter(
+          (g: Game) =>
+            g.currentStatus === "open" || g.currentStatus === "closed",
+        ).length;
+
+        const declaredToday = todayResults.filter(
+          (r: GameResult) => r.status === "declared",
+        ).length;
+
+        const todayProfit = todayResults.reduce(
+          (sum: number, r: GameResult) => sum + (r.netProfit || 0),
+          0,
+        );
+
+        setStats({
+          totalResults: resultsList.length,
+          pendingCount: pendingGames,
+          declaredCount: declaredToday,
+          cancelledCount: 0, // Can be calculated if you have cancelled results
+          todayProfit: todayProfit,
+        });
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      // Set fallback stats to avoid showing empty data
+      setStats({
+        totalResults: results.length,
+        pendingCount: games.filter(
+          (g) => g.currentStatus === "open" || g.currentStatus === "closed",
+        ).length,
+        declaredCount: results.filter((r) => r.status === "declared").length,
+        cancelledCount: 0,
+        todayProfit: 0,
+      });
     } finally {
       setLoading(false);
     }
