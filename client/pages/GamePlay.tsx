@@ -310,10 +310,22 @@ const GamePlay = () => {
         body: JSON.stringify(betPayload),
       });
 
-      const data = await response.json();
-      console.log("📊 Response:", data);
+      // Read response only once to avoid "body stream already read" error
+      let data;
+      try {
+        data = await response.json();
+        console.log("📊 Response:", data);
+      } catch (error) {
+        console.error("❌ Failed to parse response:", error);
+        toast({
+          variant: "destructive",
+          title: "Server Error",
+          description: "Invalid response from server",
+        });
+        return;
+      }
 
-      if (response.ok && data.success) {
+      if (response.ok && data?.success) {
         // Success - show success toast
         toast({
           title: "✅ Bet Placed Successfully!",
