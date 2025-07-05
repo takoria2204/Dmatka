@@ -31,7 +31,9 @@ export interface IGame extends Document {
 
   // Status
   currentStatus: "waiting" | "open" | "closed" | "result_declared";
+  forcedStatus?: "waiting" | "open" | "closed" | "result_declared";
   lastResultDate?: Date;
+  lastStatusChange?: Date;
 
   // Administrative
   createdBy: mongoose.Types.ObjectId;
