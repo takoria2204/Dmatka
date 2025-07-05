@@ -144,6 +144,79 @@ export function createServer() {
   app.get("/api/admin/games/:gameId/analytics", adminAuth, getGameAnalytics);
   app.get("/api/admin/game-results", adminAuth, getGameResults);
 
+  // Test endpoint to manually declare result for debugging
+  app.post("/api/test/declare-result", async (req, res) => {
+    try {
+      const { gameName, result } = req.body;
+
+      // Find game by name
+      const Game = (await import("./models/Game")).default;
+      const Bet = (await import("./models/Bet")).default;
+      const Wallet = (await import("./models/Wallet")).default;
+      const Transaction = (await import("./models/Transaction")).default;
+
+      const game = await Game.findOne({ name: gameName });
+      if (!game) {
+        return res.status(404).json({ message: "Game not found" });
+      }
+
+      // Find pending bets
+      const bets = await Bet.find({
+        gameId: game._id,
+        status: "pending",
+      }).populate("userId", "fullName mobile");
+
+      console.log(`📊 Found ${bets.length} pending bets for ${gameName}`);
+
+      let winnersCount = 0;
+      let totalWinnings = 0;
+
+      // Process each bet
+      for (const bet of bets) {
+        const isWinner = bet.betNumber === result;
+        console.log(
+          `🎲 ${bet.betNumber} === ${result} = ${isWinner ? "WIN" : "LOSE"}`,
+        );
+
+        if (isWinner) {
+          bet.isWinner = true;
+          bet.winningAmount = bet.potentialWinning;
+          bet.status = "won";
+          winnersCount++;
+          totalWinnings += bet.winningAmount;
+
+          // Credit wallet
+          const wallet = await Wallet.findOne({ userId: bet.userId });
+          if (wallet) {
+            wallet.winningBalance += bet.winningAmount;
+            await wallet.save();
+            console.log(
+              `💰 Credited ₹${bet.winningAmount} to user ${bet.userId}`,
+            );
+          }
+        } else {
+          bet.status = "lost";
+        }
+
+        await bet.save();
+      }
+
+      res.json({
+        success: true,
+        message: `Result declared for ${gameName}`,
+        data: {
+          result,
+          totalBets: bets.length,
+          winnersCount,
+          totalWinnings,
+        },
+      });
+    } catch (error) {
+      console.error("Test result error:", error);
+      res.status(500).json({ message: "Error declaring result" });
+    }
+  });
+
   // Support Ticket routes
   app.get("/api/support/tickets", auth, getUserTickets);
   app.post("/api/support/tickets", auth, createTicket);
