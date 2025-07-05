@@ -165,6 +165,9 @@ const AdminDashboard = () => {
   const handleMenuClick = (item: string) => {
     setActiveMenu(item);
     switch (item) {
+      case "Game Management":
+        navigate("/admin/game-management");
+        break;
       case "Betting":
         navigate("/admin/bets");
         break;
