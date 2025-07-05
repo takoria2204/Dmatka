@@ -233,7 +233,8 @@ const AdminGameResults = () => {
           crossingResult: "",
           resultDate: new Date().toISOString().split("T")[0],
         });
-        fetchData();
+        // Immediately refresh data to show updated statistics
+        setTimeout(fetchData, 500);
       } else {
         console.error("❌ Failed to declare result:", data);
         alert(
