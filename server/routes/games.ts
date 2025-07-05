@@ -70,175 +70,231 @@ export const getGameById: RequestHandler = async (req, res) => {
   }
 };
 
-// Place a bet (authenticated users)
+// Place a bet (authenticated users) - Atomic operation with transaction
 export const placeBet: RequestHandler = async (req, res) => {
-  console.log("=== Place Bet API Called ===");
+  console.log("=== PLACE BET API CALLED ===");
   console.log("Request body:", req.body);
-  console.log(
-    "User from auth:",
-    (req as any).user ? "User authenticated" : "No user",
-  );
+  console.log("User ID:", (req as any).user?._id);
+
+  // Start a database session for atomic transactions
+  const session = await mongoose.startSession();
 
   try {
     const { gameId, betType, betNumber, betAmount, betData } = req.body;
     const userId = (req as any).user._id;
-    const user = (req as any).user;
+    const userEmail = (req as any).user.email;
 
-    console.log("Extracted data:", {
-      gameId,
-      betType,
-      betNumber,
-      betAmount,
-      userId,
-    });
-
-    // Validate input
+    // Validate required fields
     if (!gameId || !betType || !betNumber || !betAmount) {
-      console.log("Validation failed - missing fields");
-      res.status(400).json({ message: "Missing required fields" });
-      return;
+      console.log("❌ Missing required fields");
+      return res.status(400).json({
+        success: false,
+        message:
+          "All fields are required: gameId, betType, betNumber, betAmount",
+      });
     }
 
     if (betAmount <= 0) {
-      console.log("Validation failed - invalid bet amount:", betAmount);
-      res.status(400).json({ message: "Bet amount must be positive" });
-      return;
+      console.log("❌ Invalid bet amount:", betAmount);
+      return res.status(400).json({
+        success: false,
+        message: "Bet amount must be greater than 0",
+      });
     }
 
     // Get game details
-    console.log("Fetching game with ID:", gameId);
     const game = await Game.findById(gameId);
     if (!game || !game.isActive) {
-      console.log("Game not found or inactive:", {
-        game: !!game,
-        isActive: game?.isActive,
+      console.log("❌ Game not found or inactive");
+      return res.status(404).json({
+        success: false,
+        message: "Game not found or inactive",
       });
-      res.status(404).json({ message: "Game not found or inactive" });
-      return;
     }
-    console.log("Game found:", game.name);
 
     // Check if game is open for betting
     const now = new Date();
     const currentTime = now.toTimeString().slice(0, 5);
 
     if (currentTime < game.startTime || currentTime >= game.endTime) {
-      res.status(400).json({ message: "Game is not open for betting" });
-      return;
+      console.log(
+        "❌ Game not open for betting. Current:",
+        currentTime,
+        "Start:",
+        game.startTime,
+        "End:",
+        game.endTime,
+      );
+      return res.status(400).json({
+        success: false,
+        message: `Betting is ${currentTime < game.startTime ? "not started yet" : "closed"} for this game`,
+      });
     }
 
     // Validate bet amount limits
-    if (betAmount < game.minBet) {
-      res.status(400).json({
-        message: `Minimum bet amount is ₹${game.minBet}`,
+    if (betAmount < game.minBet || betAmount > game.maxBet) {
+      console.log(
+        "❌ Bet amount out of range:",
+        betAmount,
+        "Range:",
+        game.minBet,
+        "-",
+        game.maxBet,
+      );
+      return res.status(400).json({
+        success: false,
+        message: `Bet amount must be between ₹${game.minBet} and ₹${game.maxBet}`,
       });
-      return;
     }
 
-    if (betAmount > game.maxBet) {
-      res.status(400).json({
-        message: `Maximum bet amount is ₹${game.maxBet}`,
-      });
-      return;
-    }
+    // Start atomic transaction
+    await session.withTransaction(async () => {
+      // Get user wallet with session lock
+      let wallet = await Wallet.findOne({ userId }).session(session);
+      if (!wallet) {
+        console.log("Creating new wallet for user");
+        wallet = await Wallet.create([{ userId }], { session });
+        wallet = wallet[0];
+      }
 
-    // Check user wallet balance
-    console.log("Checking wallet for user:", userId);
-    let wallet = await Wallet.findOne({ userId });
-    if (!wallet) {
-      console.log("Creating new wallet for user");
-      wallet = await Wallet.create({ userId });
-    }
-    console.log(
-      "Wallet found - depositBalance:",
-      wallet.depositBalance,
-      "required:",
-      betAmount,
-    );
+      console.log(
+        "💰 Current wallet balance:",
+        wallet.depositBalance,
+        "Required:",
+        betAmount,
+      );
 
-    if (wallet.depositBalance < betAmount) {
-      console.log("Insufficient balance - returning error");
-      res.status(400).json({
-        message: "Insufficient wallet balance",
-        currentBalance: wallet.depositBalance,
-      });
-      return;
-    }
+      // Check sufficient balance
+      if (wallet.depositBalance < betAmount) {
+        throw new Error(
+          `Insufficient wallet balance. Current: ₹${wallet.depositBalance}, Required: ₹${betAmount}`,
+        );
+      }
 
-    // Calculate potential winning
-    let multiplier = 1;
-    switch (betType) {
-      case "jodi":
-        multiplier = game.jodiPayout;
-        break;
-      case "haruf":
-        multiplier = game.harufPayout;
-        break;
-      case "crossing":
-        multiplier = game.crossingPayout;
-        break;
-      default:
-        res.status(400).json({ message: "Invalid bet type" });
-        return;
-    }
+      // Calculate potential winning
+      let multiplier = 1;
+      switch (betType) {
+        case "jodi":
+          multiplier = game.jodiPayout;
+          break;
+        case "haruf":
+          multiplier = game.harufPayout;
+          break;
+        case "crossing":
+          multiplier = game.crossingPayout;
+          break;
+        default:
+          throw new Error("Invalid bet type");
+      }
 
-    const potentialWinning = betAmount * multiplier;
+      const potentialWinning = betAmount * multiplier;
 
-    // Create bet record
-    const bet = new Bet({
-      userId,
-      gameId,
-      gameName: game.name,
-      gameType: game.type,
-      betType,
-      betNumber,
-      betAmount,
-      potentialWinning,
-      betData,
-      gameDate: new Date(),
-      gameTime: game.endTime,
-      ipAddress: req.ip,
-      deviceInfo: req.get("User-Agent"),
-    });
+      // Create transaction record first
+      const transaction = await Transaction.create(
+        [
+          {
+            userId,
+            type: "bet",
+            amount: betAmount,
+            status: "completed",
+            description: `Bet placed on ${game.name} - ${betType.toUpperCase()} - ${betNumber}`,
+            gameId: gameId,
+            gameName: game.name,
+            referenceId: `BET_${Date.now()}_${userId}`,
+          },
+        ],
+        { session },
+      );
 
-    // Deduct amount from wallet
-    console.log("Deducting amount from wallet. Before:", wallet.depositBalance);
-    wallet.depositBalance -= betAmount;
-    await wallet.save();
-    console.log("Amount deducted. After:", wallet.depositBalance);
+      // Create bet record
+      const bet = await Bet.create(
+        [
+          {
+            userId,
+            gameId,
+            gameName: game.name,
+            gameType: game.type,
+            betType,
+            betNumber,
+            betAmount,
+            potentialWinning,
+            betData: {
+              ...betData,
+              userEmail,
+              ipAddress: req.ip,
+              userAgent: req.get("User-Agent"),
+            },
+            gameDate: new Date(),
+            gameTime: game.endTime,
+            status: "pending",
+            deductionTransactionId: transaction[0]._id,
+          },
+        ],
+        { session },
+      );
 
-    // Create deduction transaction
-    console.log("Creating transaction record");
-    const transaction = await Transaction.create({
-      userId,
-      type: "bet",
-      amount: betAmount,
-      status: "completed",
-      description: `Bet placed on ${game.name} - ${betType}`,
-      gameId: gameId,
-      gameName: game.name,
-    });
-    console.log("Transaction created:", transaction._id);
+      // Deduct amount from wallet atomically
+      wallet.depositBalance -= betAmount;
+      wallet.totalBets += betAmount;
+      await wallet.save({ session });
 
-    bet.deductionTransactionId = transaction._id as mongoose.Types.ObjectId;
-    await bet.save();
-    console.log("Bet saved with ID:", bet._id);
+      console.log("✅ Bet placed successfully!");
+      console.log("Bet ID:", bet[0]._id);
+      console.log("Transaction ID:", transaction[0]._id);
+      console.log("New wallet balance:", wallet.depositBalance);
 
-    const responseData = {
-      success: true,
-      message: "Bet placed successfully",
-      data: {
-        bet,
+      // Store data for response
+      req.betResult = {
+        bet: bet[0],
+        transaction: transaction[0],
         currentBalance: wallet.depositBalance,
         potentialWinning,
-      },
-    };
-    console.log("Sending success response:", responseData);
+      };
+    });
 
-    res.status(201).json(responseData);
-  } catch (error) {
-    console.error("Place bet error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    // Send success response
+    const result = (req as any).betResult;
+    res.status(201).json({
+      success: true,
+      message: `Bet placed successfully on ${game.name}`,
+      data: {
+        betId: result.bet._id,
+        gameId: game._id,
+        gameName: game.name,
+        betType: betType.toUpperCase(),
+        betNumber,
+        betAmount,
+        potentialWinning: result.potentialWinning,
+        currentBalance: result.currentBalance,
+        transactionId: result.transaction._id,
+        status: "pending",
+      },
+    });
+  } catch (error: any) {
+    console.error("❌ Place bet error:", error.message);
+
+    // Send appropriate error response
+    if (error.message.includes("Insufficient")) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+        type: "insufficient_balance",
+      });
+    } else if (error.message.includes("Invalid")) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+        type: "validation_error",
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "Failed to place bet. Please try again.",
+        type: "server_error",
+      });
+    }
+  } finally {
+    await session.endSession();
   }
 };
 
