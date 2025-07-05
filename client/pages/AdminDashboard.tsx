@@ -192,6 +192,18 @@ const AdminDashboard = () => {
       case "Support Tickets":
         navigate("/admin/support");
         break;
+      case "Admin Management":
+        navigate("/admin/management");
+        break;
+      case "Settings":
+        navigate("/admin/settings");
+        break;
+      case "Reports & Downloads":
+        navigate("/admin/reports");
+        break;
+      case "Testing":
+        navigate("/admin/testing");
+        break;
       default:
         break;
     }
