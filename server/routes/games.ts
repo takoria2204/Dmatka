@@ -73,6 +73,10 @@ export const getGameById: RequestHandler = async (req, res) => {
 // Place a bet (authenticated users) - Atomic operation with transaction
 export const placeBet: RequestHandler = async (req, res) => {
   console.log("=== PLACE BET API CALLED ===");
+  console.log("Timestamp:", new Date().toISOString());
+  console.log("Request method:", req.method);
+  console.log("Request URL:", req.url);
+  console.log("Request headers:", req.headers);
   console.log("Request body:", req.body);
   console.log("User ID:", (req as any).user?._id);
 
