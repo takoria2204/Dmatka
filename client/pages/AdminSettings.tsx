@@ -149,11 +149,26 @@ const AdminSettings = () => {
 
       const response = await fetch("/api/admin/settings", {
         headers: { Authorization: `Bearer ${token}` },
-      });
+      }).catch(() => null);
 
-      if (response.ok) {
-        const data = await response.json();
-        setSettings(data.data || settings);
+      if (response && response.ok) {
+        try {
+          const contentType = response.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const data = await response.json();
+            setSettings(data.data || settings);
+          } else {
+            console.log(
+              "Settings API returned non-JSON response, using default settings",
+            );
+          }
+        } catch (parseError) {
+          console.log(
+            "Failed to parse settings response, using default settings",
+          );
+        }
+      } else {
+        console.log("Settings API not available, using default settings");
       }
     } catch (error) {
       console.error("Error fetching settings:", error);
