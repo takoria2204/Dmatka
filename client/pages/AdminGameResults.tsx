@@ -70,10 +70,20 @@ interface GameResult {
 const AdminGameResults = () => {
   const [games, setGames] = useState<Game[]>([]);
   const [results, setResults] = useState<GameResult[]>([]);
+  const [stats, setStats] = useState({
+    totalResults: 0,
+    pendingCount: 0,
+    declaredCount: 0,
+    cancelledCount: 0,
+    todayProfit: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [declaring, setDeclaring] = useState(false);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [showDeclareModal, setShowDeclareModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "declared" | "cancelled" | "all"
+  >("pending");
   const [resultData, setResultData] = useState({
     jodiResult: "",
     harufResult: "",
