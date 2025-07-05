@@ -14,18 +14,32 @@ export const getAllGames: RequestHandler = async (req, res) => {
       .select("-createdBy -__v")
       .sort({ startTime: 1 });
 
-    // Add current game status based on time
+    // Add current game status based on time or forced status
     const gamesWithStatus = games.map((game) => {
+      // If admin has forced a status, use that
+      if (game.forcedStatus && game.isActive) {
+        return {
+          ...game.toObject(),
+          currentStatus: game.forcedStatus,
+        };
+      }
+
+      // Otherwise calculate based on time
       const now = new Date();
       const currentTime = now.toTimeString().slice(0, 5); // HH:mm format
 
       let status = "waiting";
-      if (currentTime >= game.startTime && currentTime < game.endTime) {
-        status = "open";
-      } else if (currentTime >= game.endTime && currentTime < game.resultTime) {
-        status = "closed";
-      } else if (currentTime >= game.resultTime) {
-        status = "result_declared";
+      if (game.isActive) {
+        if (currentTime >= game.startTime && currentTime < game.endTime) {
+          status = "open";
+        } else if (
+          currentTime >= game.endTime &&
+          currentTime < game.resultTime
+        ) {
+          status = "closed";
+        } else if (currentTime >= game.resultTime) {
+          status = "result_declared";
+        }
       }
 
       return {
