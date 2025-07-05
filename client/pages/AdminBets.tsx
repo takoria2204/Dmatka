@@ -277,10 +277,10 @@ const AdminBets = () => {
               className="bg-blue-500 text-white hover:bg-blue-600"
             >
               <RefreshCw
-              className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
-            />
-            Refresh
-          </Button>
+                className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </Button>
         </div>
 
         {/* Stats Cards */}
