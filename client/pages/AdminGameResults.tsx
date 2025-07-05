@@ -211,18 +211,13 @@ const AdminGameResults = () => {
 
       if (response.ok) {
         const result = data.data;
-        const successMessage = `🎉 Result Declared Successfully!
+        console.log("✅ Result declared successfully:", data);
 
-📊 Game: ${selectedGame.name}
-🎯 Result: ${resultData.jodiResult}${resultData.harufResult ? ` (Haruf: ${resultData.harufResult})` : ""}${resultData.crossingResult ? ` (Crossing: ${resultData.crossingResult})` : ""}
+        // Show success message using toast
+        const successMessage = `Result Declared Successfully! Game: ${selectedGame.name}, Winners: ${result.winnersCount}, Profit: ₹${result.netProfit.toLocaleString()}`;
 
-👥 Winners: ${result.winnersCount} players
-💰 Total Winnings Paid: ₹${result.totalWinningAmount.toLocaleString()}
-📈 Platform Profit: ₹${result.netProfit.toLocaleString()}
-
-✅ All winnings have been credited to winners' accounts!`;
-
-        alert(successMessage);
+        // You can replace this with a toast notification if available
+        alert(`🎉 ${successMessage}`);
         setShowDeclareModal(false);
         setSelectedGame(null);
         setResultData({
