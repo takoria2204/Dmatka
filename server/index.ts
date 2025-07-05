@@ -139,6 +139,7 @@ export function createServer() {
   app.put("/api/admin/games/:gameId", adminAuth, updateGame);
   app.delete("/api/admin/games/:gameId", adminAuth, deleteGame);
   app.post("/api/admin/games/:gameId/declare-result", adminAuth, declareResult);
+  app.put("/api/admin/games/:gameId/force-status", adminAuth, forceGameStatus);
   app.get("/api/admin/games/:gameId/analytics", adminAuth, getGameAnalytics);
   app.get("/api/admin/game-results", adminAuth, getGameResults);
 
