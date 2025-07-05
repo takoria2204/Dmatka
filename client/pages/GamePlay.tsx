@@ -828,13 +828,21 @@ const GamePlay = () => {
                     disabled={
                       game.currentStatus !== "open" ||
                       !betData.betNumber ||
-                      !betData.betAmount
+                      !betData.betAmount ||
+                      placing
                     }
                     className="w-full bg-matka-gold text-matka-dark hover:bg-matka-gold-dark font-semibold py-3"
                   >
-                    {game.currentStatus !== "open"
-                      ? `Betting ${game.currentStatus === "closed" ? "Closed" : "Not Open"}`
-                      : "Place Bet"}
+                    {placing ? (
+                      <>
+                        <div className="animate-spin w-4 h-4 border-2 border-matka-dark border-t-transparent rounded-full mr-2"></div>
+                        Placing Bet...
+                      </>
+                    ) : game.currentStatus !== "open" ? (
+                      `Betting ${game.currentStatus === "closed" ? "Closed" : "Not Open"}`
+                    ) : (
+                      "Place Bet"
+                    )}
                   </Button>
                 </div>
               </CardContent>
