@@ -632,6 +632,10 @@ export const deleteGame: RequestHandler = async (req, res) => {
 
 // Declare game result (admin)
 export const declareResult: RequestHandler = async (req, res) => {
+  console.log("=== RESULT DECLARATION STARTED ===");
+  console.log("Game ID:", req.params.gameId);
+  console.log("Result Data:", req.body);
+
   try {
     const { gameId } = req.params;
     const { jodiResult, harufResult, crossingResult, resultDate } = req.body;
@@ -639,9 +643,12 @@ export const declareResult: RequestHandler = async (req, res) => {
 
     const game = await Game.findById(gameId);
     if (!game) {
+      console.log("❌ Game not found");
       res.status(404).json({ message: "Game not found" });
       return;
     }
+
+    console.log("🎮 Game found:", game.name, "Type:", game.type);
 
     // Check if result already exists for today
     const today = resultDate ? new Date(resultDate) : new Date();
