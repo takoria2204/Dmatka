@@ -468,8 +468,19 @@ Rajdhani Day,2100,150000,71,156`;
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={reportData.dailyRevenue}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis dataKey="date" stroke="#9CA3AF" />
-                      <YAxis stroke="#9CA3AF" />
+                      <XAxis
+                        dataKey="date"
+                        stroke="#9CA3AF"
+                        tick={{ fill: "#9CA3AF" }}
+                        axisLine={{ stroke: "#9CA3AF" }}
+                        tickLine={{ stroke: "#9CA3AF" }}
+                      />
+                      <YAxis
+                        stroke="#9CA3AF"
+                        tick={{ fill: "#9CA3AF" }}
+                        axisLine={{ stroke: "#9CA3AF" }}
+                        tickLine={{ stroke: "#9CA3AF" }}
+                      />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: "#1F2937",
