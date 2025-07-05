@@ -667,17 +667,23 @@ export const declareResult: RequestHandler = async (req, res) => {
       return;
     }
 
-    // Get all pending bets for this game today
+    // Get all pending bets for this game (check multiple date ranges)
     const bets = await Bet.find({
       gameId,
-      gameDate: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-      },
       status: "pending",
     }).populate("userId", "fullName mobile");
 
     console.log(`📊 Found ${bets.length} pending bets for processing`);
+    console.log(
+      "📅 Bet dates:",
+      bets.map((bet) => ({
+        id: bet._id,
+        gameDate: bet.gameDate,
+        betPlacedAt: bet.betPlacedAt,
+        betNumber: bet.betNumber,
+        betAmount: bet.betAmount,
+      })),
+    );
 
     // Calculate winners and update bets
     let totalWinningAmount = 0;
