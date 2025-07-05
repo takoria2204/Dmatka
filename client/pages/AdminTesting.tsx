@@ -35,6 +35,11 @@ import {
   Shield,
   FileText,
   Monitor,
+  Users,
+  Search,
+  Archive,
+  CreditCard,
+  DollarSign,
 } from "lucide-react";
 
 interface TestResult {
