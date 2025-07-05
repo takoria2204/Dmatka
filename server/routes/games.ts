@@ -728,7 +728,8 @@ export const declareResult: RequestHandler = async (req, res) => {
         // Credit winning amount to user wallet
         const wallet = await Wallet.findOne({ userId: bet.userId });
         if (wallet) {
-          wallet.depositBalance += bet.winningAmount;
+          wallet.winningBalance += bet.winningAmount;
+          wallet.totalWinnings += bet.winningAmount;
           await wallet.save();
 
           // Create winning transaction
@@ -737,12 +738,17 @@ export const declareResult: RequestHandler = async (req, res) => {
             type: "win",
             amount: bet.winningAmount,
             status: "completed",
-            description: `Won ${game.name} - ${bet.betType}`,
+            description: `🎉 Won ${game.name} - ${bet.betType.toUpperCase()} - Number: ${bet.betNumber}`,
             gameId: gameId,
             gameName: game.name,
+            referenceId: `WIN_${Date.now()}_${bet.userId}`,
           });
 
           bet.winningTransactionId = transaction._id as mongoose.Types.ObjectId;
+
+          console.log(
+            `💰 Winner! User ${bet.userId} won ₹${bet.winningAmount} on ${bet.betNumber}`,
+          );
         }
       } else {
         bet.isWinner = false;
