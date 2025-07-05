@@ -302,7 +302,7 @@ const GamePlay = () => {
       console.log("🎯 Placing bet:", betPayload);
 
       // Use XMLHttpRequest to avoid fetch stream conflicts
-      const data = await new Promise((resolve, reject) => {
+      const data: any = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/games/place-bet", true);
         xhr.setRequestHeader("Content-Type", "application/json");
