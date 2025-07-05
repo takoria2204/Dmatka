@@ -130,24 +130,47 @@ export const placeBet: RequestHandler = async (req, res) => {
       });
     }
 
-    // Check if game is open for betting
-    const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5);
+    // Check if game is open for betting (respect admin forced status)
+    let gameStatus = "";
 
-    if (currentTime < game.startTime || currentTime >= game.endTime) {
+    if (game.forcedStatus && game.isActive) {
+      // Admin has forced a status
+      gameStatus = game.forcedStatus;
+      console.log("🎯 Using admin forced status:", gameStatus);
+    } else if (game.isActive) {
+      // Calculate based on time
+      const now = new Date();
+      const currentTime = now.toTimeString().slice(0, 5);
+
+      if (currentTime >= game.startTime && currentTime < game.endTime) {
+        gameStatus = "open";
+      } else if (currentTime >= game.endTime && currentTime < game.resultTime) {
+        gameStatus = "closed";
+      } else if (currentTime >= game.resultTime) {
+        gameStatus = "result_declared";
+      } else {
+        gameStatus = "waiting";
+      }
       console.log(
-        "❌ Game not open for betting. Current:",
+        "⏰ Using time-based status:",
+        gameStatus,
+        "Current:",
         currentTime,
-        "Start:",
-        game.startTime,
-        "End:",
-        game.endTime,
       );
+    } else {
+      gameStatus = "waiting";
+      console.log("⏸️ Game is inactive");
+    }
+
+    if (gameStatus !== "open") {
+      console.log("❌ Game not open for betting. Status:", gameStatus);
       return res.status(400).json({
         success: false,
-        message: `Betting is ${currentTime < game.startTime ? "not started yet" : "closed"} for this game`,
+        message: `Betting is ${gameStatus === "waiting" ? "not started yet" : gameStatus === "closed" ? "closed" : "not available"} for this game`,
       });
     }
+
+    console.log("✅ Game is open for betting. Status:", gameStatus);
 
     // Validate bet amount limits
     if (betAmount < game.minBet || betAmount > game.maxBet) {
