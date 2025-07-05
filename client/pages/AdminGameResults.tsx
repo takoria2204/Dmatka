@@ -295,11 +295,62 @@ const AdminGameResults = () => {
           </div>
           <Button
             onClick={fetchData}
-            className="bg-blue-500 text-white hover:bg-blue-600"
+            className="bg-green-500 text-white hover:bg-green-600"
+            disabled={loading}
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw
+              className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
+        </div>
+
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+          <Card className="bg-[#2a2a2a] border-gray-700">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-white">
+                {stats.totalResults}
+              </div>
+              <div className="text-sm text-gray-400">Total Results</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-yellow-600 border-yellow-500">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-white">
+                {stats.pendingCount}
+              </div>
+              <div className="text-sm text-yellow-100">Pending</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-green-600 border-green-500">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-white">
+                {stats.declaredCount}
+              </div>
+              <div className="text-sm text-green-100">Declared</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-red-600 border-red-500">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-white">
+                {stats.cancelledCount}
+              </div>
+              <div className="text-sm text-red-100">Cancelled</div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-blue-600 border-blue-500">
+            <CardContent className="p-4 text-center">
+              <div className="text-2xl font-bold text-white">
+                ₹{stats.todayProfit.toLocaleString()}
+              </div>
+              <div className="text-sm text-blue-100">Today's Profit</div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Games List */}
