@@ -472,6 +472,8 @@ export const updateGame: RequestHandler = async (req, res) => {
       return;
     }
 
+    console.log(`✅ Game ${game.name} updated - isActive: ${game.isActive}`);
+
     res.json({
       success: true,
       message: "Game updated successfully",
@@ -487,6 +489,48 @@ export const updateGame: RequestHandler = async (req, res) => {
     } else {
       res.status(500).json({ message: "Server error" });
     }
+  }
+};
+
+// Force change game status (admin)
+export const forceGameStatus: RequestHandler = async (req, res) => {
+  try {
+    const { gameId } = req.params;
+    const { forceStatus } = req.body;
+
+    if (
+      !["waiting", "open", "closed", "result_declared"].includes(forceStatus)
+    ) {
+      res.status(400).json({ message: "Invalid status" });
+      return;
+    }
+
+    const game = await Game.findById(gameId);
+    if (!game) {
+      res.status(404).json({ message: "Game not found" });
+      return;
+    }
+
+    // Store the forced status in a custom field
+    const updatedGame = await Game.findByIdAndUpdate(
+      gameId,
+      {
+        forcedStatus: forceStatus,
+        lastStatusChange: new Date(),
+      },
+      { new: true },
+    );
+
+    console.log(`✅ Game ${game.name} status forced to: ${forceStatus}`);
+
+    res.json({
+      success: true,
+      message: `Game status changed to ${forceStatus}`,
+      data: updatedGame,
+    });
+  } catch (error: any) {
+    console.error("Force game status error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
