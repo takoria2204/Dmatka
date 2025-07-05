@@ -38,6 +38,7 @@ import GamePlay from "./pages/GamePlay";
 import MyBets from "./pages/MyBets";
 import AdminGameResults from "./pages/AdminGameResults";
 import AdminGameManagement from "./pages/AdminGameManagement";
+import TestResultDeclaration from "./pages/TestResultDeclaration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
