@@ -805,17 +805,30 @@ export const declareResult: RequestHandler = async (req, res) => {
     game.lastResultDate = new Date();
     await game.save();
 
+    const winnersCount =
+      betDistribution.jodi.winningBets +
+      betDistribution.haruf.winningBets +
+      betDistribution.crossing.winningBets;
+
+    console.log("=== RESULT DECLARATION COMPLETED ===");
+    console.log(`🎯 Game: ${game.name}`);
+    console.log(
+      `📊 Result: Jodi=${jodiResult}, Haruf=${harufResult}, Crossing=${crossingResult}`,
+    );
+    console.log(`👥 Total Bets: ${bets.length}`);
+    console.log(`🏆 Winners: ${winnersCount}`);
+    console.log(`💰 Total Winnings: ₹${totalWinningAmount.toLocaleString()}`);
+    console.log(`📈 Platform Profit: ₹${netProfit.toLocaleString()}`);
+
     res.json({
       success: true,
       message: "Result declared successfully",
       data: {
         gameResult,
-        winnersCount:
-          betDistribution.jodi.winningBets +
-          betDistribution.haruf.winningBets +
-          betDistribution.crossing.winningBets,
+        winnersCount,
         totalWinningAmount,
         netProfit,
+        betsProcessed: bets.length,
       },
     });
   } catch (error) {
