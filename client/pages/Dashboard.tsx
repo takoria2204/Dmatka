@@ -321,7 +321,7 @@ const Dashboard = () => {
               { name: "Add Money", route: "/add-money", icon: Wallet },
               { name: "Withdraw", route: "/withdraw", icon: TrendingUp },
               { name: "Wallet", route: "/wallet", icon: User },
-              { name: "My Bets", route: "/betting-history", icon: Target },
+              { name: "My Bets", route: "/my-bets", icon: Target },
               { name: "Support", route: "/support", icon: MessageSquare },
             ].map((action, index) => (
               <Card
