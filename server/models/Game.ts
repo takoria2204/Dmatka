@@ -146,7 +146,14 @@ const GameSchema: Schema = new Schema(
       default: "waiting",
       index: true,
     },
+    forcedStatus: {
+      type: String,
+      enum: ["waiting", "open", "closed", "result_declared"],
+    },
     lastResultDate: {
+      type: Date,
+    },
+    lastStatusChange: {
       type: Date,
     },
 
