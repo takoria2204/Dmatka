@@ -219,6 +219,14 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
+    <Route
+      path="/my-bets"
+      element={
+        <ProtectedRoute>
+          <MyBets />
+        </ProtectedRoute>
+      }
+    />
     <Route path="/admin/login" element={<AdminLogin />} />
     <Route
       path="/admin/dashboard"
