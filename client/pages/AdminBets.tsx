@@ -88,6 +88,17 @@ const AdminBets = () => {
     fetchBets();
   }, [navigate, statusFilter, gameTypeFilter]);
 
+  // Auto-refresh effect
+  useEffect(() => {
+    if (!autoRefresh) return;
+
+    const interval = setInterval(() => {
+      fetchBets();
+    }, 10000); // Refresh every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [autoRefresh, statusFilter, gameTypeFilter]);
+
   const fetchBets = async () => {
     try {
       if (!loading) setRefreshing(true);
