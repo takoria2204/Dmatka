@@ -237,16 +237,38 @@ const AdminBets = () => {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Dashboard
             </Button>
-            <h1 className="text-2xl font-bold text-white">
-              Betting Management
-            </h1>
+            <div>
+              <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+                Betting Management
+                {autoRefresh && (
+                  <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                )}
+              </h1>
+              <p className="text-gray-400 text-sm">
+                Last updated: {lastUpdated.toLocaleTimeString()}
+                {autoRefresh && " • Auto-refreshing every 10s"}
+              </p>
+            </div>
           </div>
-          <Button
-            onClick={fetchBets}
-            disabled={refreshing}
-            className="bg-blue-500 text-white hover:bg-blue-600"
-          >
-            <RefreshCw
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              variant="outline"
+              size="sm"
+              className={`${
+                autoRefresh
+                  ? "bg-green-500/20 border-green-500 text-green-400"
+                  : "bg-gray-500/20 border-gray-500 text-gray-400"
+              }`}
+            >
+              {autoRefresh ? "Auto ON" : "Auto OFF"}
+            </Button>
+            <Button
+              onClick={fetchBets}
+              disabled={refreshing}
+              className="bg-blue-500 text-white hover:bg-blue-600"
+            >
+              <RefreshCw
               className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
             />
             Refresh
