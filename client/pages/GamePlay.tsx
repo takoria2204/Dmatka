@@ -311,44 +311,35 @@ const GamePlay = () => {
       });
 
       console.log("📊 Response status:", response.status);
+      console.log(
+        "📊 Response headers:",
+        Object.fromEntries(response.headers.entries()),
+      );
 
-      // Handle response safely
+      // Read response text first, then parse
+      const responseText = await response.text();
+      console.log("📊 Response text:", responseText);
+
       let data;
-      if (response.ok) {
+      if (responseText) {
         try {
-          // Clone response to avoid stream consumption issues
-          const responseClone = response.clone();
-          data = await responseClone.json();
-          console.log("📊 Response data:", data);
+          data = JSON.parse(responseText);
+          console.log("📊 Parsed data:", data);
         } catch (parseError) {
-          console.error("❌ Failed to parse success response:", parseError);
-          // If JSON parsing fails, try reading as text
-          try {
-            const textResponse = await response.text();
-            console.log("📊 Response as text:", textResponse);
-            // Try to manually parse or handle as success if it's empty
-            if (!textResponse) {
-              data = { success: true, message: "Bet placed successfully" };
-            } else {
-              data = { success: false, message: "Invalid response format" };
-            }
-          } catch (textError) {
-            console.error("❌ Failed to read response as text:", textError);
-            data = { success: false, message: "Server communication error" };
-          }
-        }
-      } else {
-        // Handle error responses
-        try {
-          data = await response.json();
-        } catch (parseError) {
-          console.error("❌ Failed to parse error response:", parseError);
+          console.error("❌ Failed to parse JSON:", parseError);
           data = {
             success: false,
-            message: `Server error (${response.status})`,
-            type: "server_error",
+            message: "Invalid JSON response from server",
+            type: "parse_error",
           };
         }
+      } else {
+        console.log("📊 Empty response received");
+        data = {
+          success: false,
+          message: "Empty response from server",
+          type: "empty_response",
+        };
       }
 
       if (data?.success) {
