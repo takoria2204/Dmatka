@@ -151,33 +151,67 @@ const AdminManagement = () => {
       setLoading(true);
       const token = localStorage.getItem("admin_token");
 
-      // Fetch admins and activities
+      // Fetch admins and activities with proper error handling
       const [adminsResponse, activitiesResponse] = await Promise.all([
         fetch("/api/admin/management/admins", {
           headers: { Authorization: `Bearer ${token}` },
-        }),
+        }).catch(() => null),
         fetch("/api/admin/management/activities", {
           headers: { Authorization: `Bearer ${token}` },
-        }),
+        }).catch(() => null),
       ]);
 
-      if (adminsResponse.ok) {
-        const adminsData = await adminsResponse.json();
-        setAdmins(adminsData.data || getMockAdmins());
-        calculateStats(adminsData.data || getMockAdmins());
+      // Handle admins response
+      if (adminsResponse && adminsResponse.ok) {
+        try {
+          const contentType = adminsResponse.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const adminsData = await adminsResponse.json();
+            setAdmins(adminsData.data || getMockAdmins());
+            calculateStats(adminsData.data || getMockAdmins());
+          } else {
+            // Response is not JSON, use mock data
+            console.log(
+              "Admins API returned non-JSON response, using mock data",
+            );
+            setAdmins(getMockAdmins());
+            calculateStats(getMockAdmins());
+          }
+        } catch (parseError) {
+          console.log("Failed to parse admins response, using mock data");
+          setAdmins(getMockAdmins());
+          calculateStats(getMockAdmins());
+        }
       } else {
+        console.log("Admins API not available, using mock data");
         setAdmins(getMockAdmins());
         calculateStats(getMockAdmins());
       }
 
-      if (activitiesResponse.ok) {
-        const activitiesData = await activitiesResponse.json();
-        setActivities(activitiesData.data || getMockActivities());
+      // Handle activities response
+      if (activitiesResponse && activitiesResponse.ok) {
+        try {
+          const contentType = activitiesResponse.headers.get("content-type");
+          if (contentType && contentType.includes("application/json")) {
+            const activitiesData = await activitiesResponse.json();
+            setActivities(activitiesData.data || getMockActivities());
+          } else {
+            console.log(
+              "Activities API returned non-JSON response, using mock data",
+            );
+            setActivities(getMockActivities());
+          }
+        } catch (parseError) {
+          console.log("Failed to parse activities response, using mock data");
+          setActivities(getMockActivities());
+        }
       } else {
+        console.log("Activities API not available, using mock data");
         setActivities(getMockActivities());
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      // Use mock data as fallback
       setAdmins(getMockAdmins());
       setActivities(getMockActivities());
       calculateStats(getMockAdmins());
