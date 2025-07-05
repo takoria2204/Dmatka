@@ -318,6 +318,7 @@ const AppRoutes = () => (
         </AdminProtectedRoute>
       }
     />
+    <Route path="/test-result" element={<TestResultDeclaration />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );
