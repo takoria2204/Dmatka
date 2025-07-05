@@ -327,12 +327,20 @@ const GamePlay = () => {
           } else {
             try {
               const errorData = JSON.parse(xhr.responseText);
+              // Add proper error type based on status code
+              if (xhr.status === 401) {
+                errorData.type = "authentication_error";
+              } else if (xhr.status === 400) {
+                errorData.type = errorData.type || "validation_error";
+              }
               resolve(errorData);
             } catch (parseError) {
+              const errorType =
+                xhr.status === 401 ? "authentication_error" : "server_error";
               resolve({
                 success: false,
                 message: `Server error (${xhr.status})`,
-                type: "server_error",
+                type: errorType,
               });
             }
           }
