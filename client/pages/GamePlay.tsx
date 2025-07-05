@@ -903,15 +903,27 @@ const GamePlay = () => {
               <Button
                 variant="outline"
                 onClick={() => setShowBetModal(false)}
+                disabled={placing}
                 className="border-border text-foreground"
               >
                 Cancel
               </Button>
               <Button
                 onClick={confirmBet}
+                disabled={placing}
                 className="bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
               >
-                Confirm Bet
+                {placing ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-matka-dark border-t-transparent rounded-full mr-2"></div>
+                    Placing...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Confirm Bet
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
