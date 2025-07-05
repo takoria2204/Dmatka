@@ -64,10 +64,12 @@ const GamePlay = () => {
   const { gameId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   const [game, setGame] = useState<Game | null>(null);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [loading, setLoading] = useState(true);
+  const [placing, setPlacing] = useState(false);
   const [countdown, setCountdown] = useState({
     hours: 0,
     minutes: 0,
