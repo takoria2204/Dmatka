@@ -302,6 +302,14 @@ const AppRoutes = () => (
       }
     />
     <Route
+      path="/admin/game-management"
+      element={
+        <AdminProtectedRoute>
+          <AdminGameManagement />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
       path="/admin/support"
       element={
         <AdminProtectedRoute>
