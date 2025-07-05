@@ -147,6 +147,7 @@ const AdminDashboard = () => {
 
   const sidebarItems = [
     { name: "Dashboard", icon: FileText, active: true },
+    { name: "Game Management", icon: Settings },
     { name: "Betting", icon: Trophy },
     { name: "Users", icon: Users },
     { name: "Transactions", icon: CreditCard },
@@ -158,7 +159,6 @@ const AdminDashboard = () => {
     { name: "Admin Management", icon: Shield },
     { name: "Settings", icon: Settings },
     { name: "Reports & Downloads", icon: Download },
-    { name: "Game Results", icon: Trophy },
     { name: "Testing", icon: TestTube },
   ];
 
