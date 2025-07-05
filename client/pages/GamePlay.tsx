@@ -264,20 +264,42 @@ const GamePlay = () => {
   };
 
   const confirmBet = async () => {
+    if (placing) return;
+
+    setPlacing(true);
+
     try {
-      console.log("Placing bet with data:", {
+      const token = localStorage.getItem("matka_token");
+      if (!token) {
+        toast({
+          variant: "destructive",
+          title: "Authentication Required",
+          description: "Please login again to place bet",
+        });
+        navigate("/login");
+        return;
+      }
+
+      const betPayload = {
         gameId,
         betType: selectedBetType,
         betNumber: betData.betNumber,
         betAmount: parseFloat(betData.betAmount),
-      });
+        betData: {
+          jodiNumber:
+            selectedBetType === "jodi" ? betData.betNumber : undefined,
+          harufDigit:
+            selectedBetType === "haruf" ? betData.betNumber : undefined,
+          harufPosition:
+            selectedBetType === "haruf" ? betData.harufPosition : undefined,
+          crossingCombination:
+            selectedBetType === "crossing"
+              ? betData.crossingCombination
+              : undefined,
+        },
+      };
 
-      const token = localStorage.getItem("matka_token");
-      if (!token) {
-        alert("❌ Please login again to place bet");
-        navigate("/login");
-        return;
-      }
+      console.log("🎯 Placing bet:", betPayload);
 
       const response = await fetch("/api/games/place-bet", {
         method: "POST",
@@ -285,93 +307,31 @@ const GamePlay = () => {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          gameId,
-          betType: selectedBetType,
-          betNumber: betData.betNumber,
-          betAmount: parseFloat(betData.betAmount),
-          betData: {
-            jodiNumber:
-              selectedBetType === "jodi" ? betData.betNumber : undefined,
-            harufDigit:
-              selectedBetType === "haruf" ? betData.betNumber : undefined,
-            harufPosition:
-              selectedBetType === "haruf" ? betData.harufPosition : undefined,
-            crossingCombination:
-              selectedBetType === "crossing"
-                ? betData.crossingCombination
-                : undefined,
-          },
-        }),
+        body: JSON.stringify(betPayload),
       });
 
-      console.log("Response status:", response.status);
-      console.log(
-        "Response headers:",
-        Object.fromEntries(response.headers.entries()),
-      );
+      const data = await response.json();
+      console.log("📊 Response:", data);
 
-      if (!response.ok) {
-        // Handle non-200 responses first
-        let errorData;
-        try {
-          const errorText = await response.text();
-          errorData = errorText ? JSON.parse(errorText) : null;
-        } catch (parseError) {
-          console.error("Could not parse error response:", parseError);
-          errorData = { message: `Server error (${response.status})` };
-        }
+      if (response.ok && data.success) {
+        // Success - show success toast
+        toast({
+          title: "✅ Bet Placed Successfully!",
+          description: `₹${betData.betAmount} deducted. Bet placed on ${selectedBetType.toUpperCase()} - ${betData.betNumber}`,
+          className: "border-green-500 bg-green-50 text-green-900",
+        });
 
-        const errorMessage =
-          errorData?.message ||
-          `Failed to place bet (Status: ${response.status})`;
-        console.error("Bet placement failed:", errorMessage);
+        // Update wallet balance immediately
+        setWallet((prev) =>
+          prev
+            ? {
+                ...prev,
+                depositBalance: data.data.currentBalance,
+              }
+            : null,
+        );
 
-        if (response.status === 401) {
-          alert("❌ Session expired! Please login again.");
-          navigate("/login");
-          return;
-        }
-
-        if (
-          errorMessage.includes("Insufficient") ||
-          errorMessage.includes("balance")
-        ) {
-          alert(
-            "❌ Insufficient Wallet Balance!\n\nPlease add money to your wallet to place this bet.\n\n💰 Click 'Add Money' to recharge your wallet.",
-          );
-        } else if (
-          errorMessage.includes("not open") ||
-          errorMessage.includes("closed")
-        ) {
-          alert("❌ Betting is closed for this game!");
-        } else {
-          alert(`❌ Bet Failed!\n\n${errorMessage}`);
-        }
-        return;
-      }
-
-      // Handle successful response
-      let data;
-      try {
-        const responseText = await response.text();
-        data = responseText ? JSON.parse(responseText) : null;
-      } catch (parseError) {
-        console.error("Could not parse success response:", parseError);
-        alert("❌ Server response error - please check your bet in 'My Bets'");
-        return;
-      }
-
-      console.log("Success response data:", data);
-
-      if (data?.success) {
-        // Show real success message with actual data from server
-        const actualBalance = data.data?.currentBalance;
-        const potentialWin = data.data?.potentialWinning;
-
-        const successMessage = `🎉 Bet Placed Successfully!\n\nGame: ${game?.name}\nBet Type: ${selectedBetType.toUpperCase()}\nNumber: ${betData.betNumber}\nAmount: ₹${betData.betAmount}\nPotential Win: ₹${potentialWin?.toLocaleString() || calculatePotentialWinning().toLocaleString()}\n\n✅ Amount deducted from wallet\n💰 New Balance: ₹${actualBalance?.toLocaleString() || "Updating..."}\n📊 Check "My Bets" for updates`;
-        alert(successMessage);
-
+        // Close modal and reset form
         setShowBetModal(false);
         setBetData({
           betNumber: "",
@@ -380,17 +340,64 @@ const GamePlay = () => {
           crossingCombination: "",
         });
 
-        // Refresh wallet data to show updated balance
+        // Refresh wallet data for consistency
         await fetchWalletData();
       } else {
-        console.error("Unexpected success response format:", data);
-        alert("❌ Unexpected response - please check your bet in 'My Bets'");
+        // Error handling based on response
+        const errorMessage = data.message || "Failed to place bet";
+
+        if (
+          data.type === "insufficient_balance" ||
+          errorMessage.includes("Insufficient")
+        ) {
+          toast({
+            variant: "destructive",
+            title: "Insufficient Balance",
+            description: `Add money to your wallet. ${errorMessage}`,
+            action: (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/add-money")}
+              >
+                Add Money
+              </Button>
+            ),
+          });
+        } else if (
+          errorMessage.includes("not open") ||
+          errorMessage.includes("closed")
+        ) {
+          toast({
+            variant: "destructive",
+            title: "Betting Closed",
+            description: "This game is not accepting bets right now",
+          });
+        } else if (response.status === 401) {
+          toast({
+            variant: "destructive",
+            title: "Session Expired",
+            description: "Please login again",
+          });
+          navigate("/login");
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Bet Failed",
+            description: errorMessage,
+          });
+        }
       }
     } catch (error) {
-      console.error("Network error placing bet:", error);
-      alert(
-        "❌ Network error: Failed to connect to server. Please check your internet connection and try again.",
-      );
+      console.error("❌ Network error:", error);
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description:
+          "Failed to connect to server. Please check your internet connection.",
+      });
+    } finally {
+      setPlacing(false);
     }
   };
 
