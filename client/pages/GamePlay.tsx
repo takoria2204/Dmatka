@@ -338,7 +338,8 @@ const GamePlay = () => {
           prev
             ? {
                 ...prev,
-                depositBalance: data.data.currentBalance,
+                depositBalance:
+                  data?.data?.currentBalance || prev.depositBalance,
               }
             : null,
         );
