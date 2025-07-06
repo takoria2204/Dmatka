@@ -307,7 +307,7 @@ const GamePlay = () => {
           description: "Please login again to continue.",
         });
         navigate("/login");
-      } else if (response.status === 404) {
+      } else if (response && response.status === 404) {
         console.log("Game not found, redirecting to games list");
         toast({
           variant: "destructive",
@@ -316,7 +316,7 @@ const GamePlay = () => {
             "The requested game could not be found. Redirecting to games list.",
         });
         navigate("/games");
-      } else {
+      } else if (response) {
         console.error("Failed to fetch game data:", response.status);
         toast({
           variant: "destructive",
