@@ -31,6 +31,7 @@ import {
   Megaphone,
   Clock,
   AlertCircle,
+  Settings,
 } from "lucide-react";
 
 interface Game {
