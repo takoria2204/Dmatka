@@ -244,6 +244,12 @@ const GamePlay = () => {
       } else if (response.status === 401) {
         console.log("Wallet auth failed");
         localStorage.removeItem("matka_token");
+        localStorage.removeItem("matka_user");
+        toast({
+          variant: "destructive",
+          title: "Session Expired",
+          description: "Please login again to access your wallet.",
+        });
         navigate("/login");
       } else {
         console.error("Failed to fetch wallet data:", response.status);
