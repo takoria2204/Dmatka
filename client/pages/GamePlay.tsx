@@ -277,7 +277,7 @@ const GamePlay = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
 
-      const response = await fetch(`/api/games/${gameId}`, {
+      const response = await safeFetch(`/api/games/${gameId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
