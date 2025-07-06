@@ -128,6 +128,12 @@ const GamePlay = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log("🎮 Game data received:", data.data);
+        console.log("🎯 Payout rates:", {
+          jodi: data.data.jodiPayout,
+          haruf: data.data.harufPayout,
+          crossing: data.data.crossingPayout,
+        });
         setGame(data.data);
       } else {
         navigate("/games");
