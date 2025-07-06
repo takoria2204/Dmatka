@@ -288,7 +288,7 @@ const GamePlay = () => {
 
       clearTimeout(timeoutId);
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json();
         console.log("✅ Game data received:", data.data);
         console.log("🎯 Payout rates:", {
@@ -297,7 +297,7 @@ const GamePlay = () => {
           crossing: data.data.crossingPayout,
         });
         setGame(data.data);
-      } else if (response.status === 401) {
+      } else if (response && response.status === 401) {
         console.log("Authentication failed, redirecting to login");
         localStorage.removeItem("matka_token");
         localStorage.removeItem("matka_user");
