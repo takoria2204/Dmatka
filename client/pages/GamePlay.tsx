@@ -104,16 +104,26 @@ const GamePlay = () => {
     console.log("🔍 GamePlay useEffect - checking auth...");
     console.log("User:", user);
     console.log("GameId:", gameId);
-    console.log(
-      "Token:",
-      localStorage.getItem("matka_token") ? "Present" : "Missing",
-    );
 
-    if (!user) {
-      console.log("❌ No user found, redirecting to login");
-      navigate("/login");
+    const token = localStorage.getItem("matka_token");
+    console.log("Token:", token ? "Present" : "Missing");
+    console.log("Navigator online:", navigator.onLine);
+
+    // Immediate offline mode activation in certain conditions
+    if (!token || !navigator.onLine) {
+      console.log("🎮 Immediate demo mode activation (no auth or offline)");
+      activateDemoMode();
+      setLoading(false);
       return;
     }
+
+    if (!user) {
+      console.log("🎮 No user found, activating demo mode");
+      activateDemoMode();
+      setLoading(false);
+      return;
+    }
+
     if (!gameId) {
       console.log("❌ No gameId found, redirecting to games");
       navigate("/games");
