@@ -48,6 +48,10 @@ interface Game {
   crossingPayout: number;
   currentStatus: string;
   isActive: boolean;
+  todayBets?: number;
+  todayBetAmount?: number;
+  hasResult?: boolean;
+  needsResult?: boolean;
 }
 
 interface GameResult {
