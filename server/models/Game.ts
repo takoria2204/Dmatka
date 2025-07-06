@@ -120,7 +120,7 @@ const GameSchema: Schema = new Schema(
     },
     crossingPayout: {
       type: Number,
-      default: 180,
+      default: 95,
       min: 1,
     },
 
