@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Eye,
   Megaphone,
+  TrendingUp,
 } from "lucide-react";
 
 interface DashboardStats {
