@@ -125,7 +125,7 @@ const GamePlay = () => {
 
     // Check for authentication but don't immediately activate demo mode
     if (!token) {
-      console.log("⚠�� No auth token found, will try to fetch anyway");
+      console.log("⚠️ No auth token found, will try to fetch anyway");
       // Don't immediately activate demo mode - let the fetch attempt happen first
     }
 
@@ -283,7 +283,7 @@ const GamePlay = () => {
       console.log("🔑 Using token:", token.substring(0, 20) + "...");
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for better reliability
 
       const response = await safeFetch(`/api/games/${gameId}`, {
         headers: {
@@ -291,8 +291,6 @@ const GamePlay = () => {
         },
         signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       clearTimeout(timeoutId);
 
