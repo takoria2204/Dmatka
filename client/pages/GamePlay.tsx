@@ -300,38 +300,25 @@ const GamePlay = () => {
 
   const fetchGameData = async () => {
     try {
-      // First check if we have connectivity
-      const hasConnectivity = await checkConnectivity();
-
-      if (!hasConnectivity) {
-        console.log("🔌 No connectivity detected, activating demo mode");
-        activateDemoMode();
-        return;
-      }
-
       const token = localStorage.getItem("matka_token");
       if (!token) {
-        console.log(
-          "❌ No auth token found in fetchGameData, activating demo mode",
-        );
-        activateDemoMode();
+        console.log("❌ No auth token found, redirecting to login");
+        navigate("/login");
         return;
       }
 
-      console.log("🔄 Fetching game data for gameId:", gameId);
+      console.log(
+        "🔄 Fetching REAL game data from MongoDB Atlas for gameId:",
+        gameId,
+      );
       console.log("🔑 Using token:", token.substring(0, 20) + "...");
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout for better reliability
-
-      const response = await safeFetch(`/api/games/${gameId}`, {
+      const response = await fetch(`/api/games/${gameId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        signal: controller.signal,
       });
-
-      clearTimeout(timeoutId);
 
       if (response && response.ok) {
         const data = await response.json();
