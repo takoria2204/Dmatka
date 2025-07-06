@@ -575,13 +575,27 @@ const GamePlay = () => {
                   <p className="text-muted-foreground text-sm">
                     Available for betting
                   </p>
-                  <Button
-                    size="sm"
-                    onClick={() => navigate("/add-money")}
-                    className="mt-2 bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
-                  >
-                    Add Money
-                  </Button>
+                  <div className="flex gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      onClick={() => navigate("/add-money")}
+                      className="flex-1 bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
+                    >
+                      Add Money
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        console.log("🔄 Manually refreshing game data...");
+                        fetchGameData();
+                        fetchWalletData();
+                      }}
+                      variant="outline"
+                      className="border-matka-gold text-matka-gold hover:bg-matka-gold/10"
+                    >
+                      🔄
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -946,7 +960,7 @@ const GamePlay = () => {
                     Potential Winning:
                   </span>
                   <span className="text-green-500 font-bold">
-                    ₹{calculatePotentialWinning().toLocaleString()}
+                    ���{calculatePotentialWinning().toLocaleString()}
                   </span>
                 </div>
                 {selectedBetType === "haruf" && (
