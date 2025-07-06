@@ -360,7 +360,7 @@ const Wallet = () => {
                 )}
               </TabsContent>
 
-              <TabsContent value="history" className="space-y-3">
+              <TabsContent value="deposits" className="space-y-3">
                 {depositHistory.length === 0 ? (
                   <div className="text-center py-8">
                     <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
@@ -416,6 +416,80 @@ const Wallet = () => {
                         onClick={() => navigate("/add-money")}
                       >
                         View All Deposit History
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="withdrawals" className="space-y-3">
+                {withdrawalHistory.length === 0 ? (
+                  <div className="text-center py-8">
+                    <DollarSign className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      No withdrawal history found
+                    </p>
+                    <Button
+                      onClick={() => navigate("/withdraw")}
+                      className="mt-4 bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
+                    >
+                      Make Your First Withdrawal
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {withdrawalHistory.map((withdrawal: any) => (
+                      <div
+                        key={withdrawal._id}
+                        className="flex items-center justify-between p-3 rounded-lg border border-border/50 bg-muted/10"
+                      >
+                        <div>
+                          <p className="font-medium text-foreground">
+                            ₹{withdrawal.amount.toLocaleString()}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {withdrawal.bankDetails?.bankName ||
+                              "Bank Transfer"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            A/C:{" "}
+                            {withdrawal.bankDetails?.accountNumber?.replace(
+                              /(.{4})/g,
+                              "$1 ",
+                            ) || "****"}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <Badge
+                            className={`${getStatusColor(withdrawal.status)} border-0`}
+                          >
+                            <div className="flex items-center gap-1">
+                              {getStatusIcon(withdrawal.status)}
+                              <span className="capitalize">
+                                {withdrawal.status === "completed"
+                                  ? "approved"
+                                  : withdrawal.status}
+                              </span>
+                            </div>
+                          </Badge>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {formatDate(withdrawal.createdAt)}
+                          </p>
+                          {withdrawal.adminNotes && (
+                            <p className="text-xs text-yellow-400 mt-1">
+                              Note: {withdrawal.adminNotes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {withdrawalHistory.length >= 10 && (
+                      <Button
+                        variant="outline"
+                        className="w-full border-border text-foreground hover:bg-muted"
+                        onClick={() => navigate("/withdraw")}
+                      >
+                        View All Withdrawal History
                       </Button>
                     )}
                   </div>
