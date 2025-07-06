@@ -184,8 +184,32 @@ const Withdraw = () => {
           </CardContent>
         </Card>
 
+        {/* Withdrawal Information */}
+        <Card className="bg-card/90 backdrop-blur-sm border-border/50 mb-6">
+          <CardContent className="p-4">
+            <div className="bg-blue-500/20 border border-blue-500/30 rounded-lg p-4">
+              <h3 className="text-blue-400 font-semibold mb-2 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Withdrawal Information
+              </h3>
+              <ul className="text-blue-300 text-sm space-y-1">
+                <li>• Only winning balance can be withdrawn</li>
+                <li>• Withdrawals are processed within 24-48 hours</li>
+                <li>• Minimum withdrawal amount: ₹100</li>
+                <li>• All withdrawals require admin approval</li>
+                <li>• Ensure bank details are correct before submitting</li>
+              </ul>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Withdrawal Form */}
-        <Card className="bg-matka-dark border-matka-gold/30">
+        <Card className="bg-card/90 backdrop-blur-sm border-border/50">
+          <CardHeader>
+            <CardTitle className="text-foreground">
+              Withdrawal Request
+            </CardTitle>
+          </CardHeader>
           <CardContent className="p-6 space-y-6">
             <div>
               <Label
