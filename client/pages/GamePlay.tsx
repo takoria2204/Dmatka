@@ -323,8 +323,12 @@ const GamePlay = () => {
           title: "Server Error",
           description: `Failed to load game data (Error ${response.status}). Please try again.`,
         });
-        // Don't navigate away, just show error state
-        setGame(null);
+        // Server error, activate demo mode
+        activateDemoMode();
+      } else {
+        // No response (fetch failed), activate demo mode
+        console.log("🔌 No response received, activating demo mode");
+        activateDemoMode();
       }
     } catch (error: any) {
       console.error("Error fetching game:", error);
