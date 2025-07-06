@@ -555,13 +555,14 @@ const AdminSettings = () => {
                       </Label>
                       <Input
                         type="number"
-                        value={settings.platformCommission}
-                        onChange={(e) =>
+                        value={settings.platformCommission || ""}
+                        onChange={(e) => {
+                          const value = parseFloat(e.target.value);
                           updateSetting(
                             "platformCommission",
-                            parseFloat(e.target.value),
-                          )
-                        }
+                            isNaN(value) ? 0 : value,
+                          );
+                        }}
                         className="bg-[#1a1a1a] border-gray-600 text-white"
                       />
                     </div>
