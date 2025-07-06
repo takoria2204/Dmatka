@@ -471,6 +471,38 @@ const GamePlay = () => {
 
       console.log("🎯 Placing bet:", betPayload);
 
+      // Check if in demo mode
+      if (game._id === "demo-game-id") {
+        // Demo mode - simulate successful bet placement
+        toast({
+          title: "✅ Demo Bet Placed!",
+          description: `₹${betData.betAmount} demo bet placed on ${selectedBetType.toUpperCase()} - ${betData.betNumber}`,
+          className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        });
+
+        // Update demo wallet balance
+        setWallet((prev) =>
+          prev
+            ? {
+                ...prev,
+                depositBalance:
+                  prev.depositBalance - parseFloat(betData.betAmount),
+              }
+            : null,
+        );
+
+        // Close modal and reset form
+        setShowBetModal(false);
+        setBetData({
+          betNumber: "",
+          betAmount: "",
+          harufPosition: "first",
+          crossingCombination: "",
+        });
+
+        return;
+      }
+
       // Use XMLHttpRequest to avoid fetch stream conflicts
       const data: any = await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
