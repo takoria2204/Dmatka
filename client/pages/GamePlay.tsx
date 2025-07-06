@@ -171,6 +171,12 @@ const GamePlay = () => {
       } else if (response.status === 401) {
         console.log("Authentication failed, redirecting to login");
         localStorage.removeItem("matka_token");
+        localStorage.removeItem("matka_user");
+        toast({
+          variant: "destructive",
+          title: "Session Expired",
+          description: "Please login again to continue.",
+        });
         navigate("/login");
       } else if (response.status === 404) {
         console.log("Game not found, redirecting to games list");
