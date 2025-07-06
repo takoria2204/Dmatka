@@ -125,9 +125,13 @@ const AdminResults = () => {
         }),
       ]);
 
+      let gamesList = [];
+      let resultsList = [];
+      let todayBets = [];
+
       if (gamesResponse.ok) {
         const gamesData = await gamesResponse.json();
-        const gamesList = gamesData.data.games || [];
+        gamesList = gamesData.data.games || [];
         setGames(gamesList);
         console.log("✅ Games loaded:", gamesList.length);
       } else {
@@ -136,12 +140,53 @@ const AdminResults = () => {
 
       if (resultsResponse.ok) {
         const resultsData = await resultsResponse.json();
-        const resultsList = resultsData.data.results || [];
+        resultsList = resultsData.data.results || [];
         setResults(resultsList);
         console.log("✅ Results loaded:", resultsList.length);
       } else {
         console.error("❌ Failed to fetch results:", resultsResponse.status);
       }
+
+      if (betsResponse.ok) {
+        const betsData = await betsResponse.json();
+        todayBets = betsData.data.bets || [];
+        console.log("✅ Today's bets loaded:", todayBets.length);
+      } else {
+        console.error("❌ Failed to fetch bets:", betsResponse.status);
+        // Don't break if bets API fails
+        todayBets = [];
+      }
+
+      // Enhance games with betting statistics
+      const gamesWithStats = gamesList.map((game) => {
+        const gameBets = todayBets.filter(
+          (bet) => bet.gameId === game._id || bet.gameId?._id === game._id,
+        );
+        const totalBets = gameBets.length;
+        const totalBetAmount = gameBets.reduce(
+          (sum, bet) => sum + (bet.betAmount || 0),
+          0,
+        );
+        const hasResult = resultsList.some(
+          (result) =>
+            (result.gameId === game._id || result.gameId?._id === game._id) &&
+            result.resultDate.startsWith(today),
+        );
+
+        return {
+          ...game,
+          todayBets: totalBets,
+          todayBetAmount: totalBetAmount,
+          hasResult: hasResult,
+          needsResult:
+            totalBets > 0 &&
+            !hasResult &&
+            (game.currentStatus === "closed" ||
+              game.currentStatus === "result_declared"),
+        };
+      });
+
+      setGames(gamesWithStats);
     } catch (error) {
       console.error("❌ Error fetching data:", error);
     } finally {
