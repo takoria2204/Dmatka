@@ -118,8 +118,29 @@ const GamePlay = () => {
     return () => clearInterval(timer);
   }, [game]);
 
+  const updatePayoutRates = async () => {
+    try {
+      const token = localStorage.getItem("matka_token");
+      const response = await fetch("/api/admin/games/update-payouts", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      if (response.ok) {
+        console.log("✅ Payout rates updated successfully");
+      }
+    } catch (error) {
+      console.error("Failed to update payout rates:", error);
+    }
+  };
+
   const fetchGameData = async () => {
     try {
+      // First update payout rates to ensure we have correct values
+      await updatePayoutRates();
+
       const response = await fetch(`/api/games/${gameId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("matka_token")}`,
@@ -960,7 +981,7 @@ const GamePlay = () => {
                     Potential Winning:
                   </span>
                   <span className="text-green-500 font-bold">
-                    ���{calculatePotentialWinning().toLocaleString()}
+                    ₹{calculatePotentialWinning().toLocaleString()}
                   </span>
                 </div>
                 {selectedBetType === "haruf" && (
