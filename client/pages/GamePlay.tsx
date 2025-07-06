@@ -167,7 +167,7 @@ const GamePlay = () => {
 
       clearTimeout(timeoutId);
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json();
         console.log("✅ REAL Game data from MongoDB:", data.data);
         console.log("🎯 Current payout rates from MongoDB:", {
@@ -183,7 +183,7 @@ const GamePlay = () => {
           description: `Game data fetched from MongoDB Atlas. Payout rates: Jodi ${data.data.jodiPayout}:1, Haruf ${data.data.harufPayout}:1, Crossing ${data.data.crossingPayout}:1`,
           className: "border-green-500 bg-green-50 text-green-900",
         });
-      } else if (response.status === 401) {
+      } else if (response && response.status === 401) {
         console.log("Authentication failed, redirecting to login");
         localStorage.removeItem("matka_token");
         localStorage.removeItem("matka_user");
