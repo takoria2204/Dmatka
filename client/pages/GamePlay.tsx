@@ -149,20 +149,81 @@ const GamePlay = () => {
     }
   };
 
+  const checkConnectivity = async (): Promise<boolean> => {
+    try {
+      // Quick ping to check if server is reachable
+      const response = await fetch("/api/ping", {
+        method: "GET",
+        cache: "no-cache",
+        signal: AbortSignal.timeout(3000), // 3 second timeout
+      });
+      return response.ok;
+    } catch {
+      return false;
+    }
+  };
+
+  const activateDemoMode = () => {
+    console.log("🎮 Activating demo mode for gameId:", gameId);
+
+    // Set demo game data
+    setGame({
+      _id: "demo-game-id",
+      name:
+        gameId?.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) ||
+        "Demo Game",
+      type: "jodi",
+      description: "Demo game - offline mode",
+      startTime: "10:00",
+      endTime: "17:30",
+      resultTime: "18:00",
+      minBet: 10,
+      maxBet: 5000,
+      jodiPayout: 95,
+      harufPayout: 9,
+      crossingPayout: 95,
+      currentStatus: "open",
+      isActive: true,
+    });
+
+    // Set demo wallet data
+    setWallet({
+      depositBalance: 1000,
+      winningBalance: 500,
+      totalDeposits: 2000,
+      totalWithdrawals: 500,
+    });
+
+    toast({
+      title: "Demo Mode Active",
+      description:
+        "Running offline with demo data. All features available for testing!",
+      className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+    });
+  };
+
   const fetchGameData = async () => {
     try {
+      // First check if we have connectivity
+      const hasConnectivity = await checkConnectivity();
+
+      if (!hasConnectivity) {
+        console.log("🔌 No connectivity detected, activating demo mode");
+        activateDemoMode();
+        return;
+      }
+
       const token = localStorage.getItem("matka_token");
       if (!token) {
-        console.log("No auth token found, redirecting to login");
-        navigate("/login");
+        console.log("No auth token found, activating demo mode");
+        activateDemoMode();
         return;
       }
 
       console.log("🔄 Fetching game data for gameId:", gameId);
-      console.log("🔗 API URL:", `/api/games/${gameId}`);
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
 
       const response = await fetch(`/api/games/${gameId}`, {
         headers: {
@@ -171,8 +232,7 @@ const GamePlay = () => {
         signal: controller.signal,
       });
 
-      console.log("📊 Response status:", response.status);
-      console.log("📊 Response headers:", response.headers);
+      clearTimeout(timeoutId);
 
       clearTimeout(timeoutId);
 
