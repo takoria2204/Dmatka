@@ -149,12 +149,23 @@ const GamePlay = () => {
         gameId,
       );
 
+      // Use a wrapped fetch to handle network errors gracefully
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       const response = await fetch(`/api/games/${gameId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
+      }).catch((error) => {
+        // Silently handle fetch errors
+        console.log("🔌 Network connectivity issue detected");
+        return null;
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
