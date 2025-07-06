@@ -112,11 +112,15 @@ const AdminResults = () => {
 
       console.log("🔄 Fetching latest data from backend...");
 
-      const [gamesResponse, resultsResponse] = await Promise.all([
+      const today = new Date().toISOString().split("T")[0];
+      const [gamesResponse, resultsResponse, betsResponse] = await Promise.all([
         fetch("/api/admin/games", {
           headers: { Authorization: `Bearer ${token}` },
         }),
         fetch("/api/admin/game-results?limit=100", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch(`/api/admin/bets?date=${today}&limit=1000`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
