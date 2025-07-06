@@ -1005,6 +1005,33 @@ const GamePlay = () => {
                     <span className="text-foreground">{game.resultTime}</span>
                   </div>
                 </div>
+
+                {/* Current Payout Rates Display */}
+                <div className="mt-4 p-3 bg-matka-gold/10 rounded-lg border border-matka-gold/30">
+                  <p className="text-xs font-semibold text-matka-gold mb-2">
+                    Current Payout Rates:
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    <div className="text-center">
+                      <div className="text-blue-400">🎯 Jodi</div>
+                      <div className="font-bold text-foreground">
+                        {game.jodiPayout}:1
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-yellow-400">⚡ Haruf</div>
+                      <div className="font-bold text-foreground">
+                        {game.harufPayout}:1
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-purple-400">🏆 Crossing</div>
+                      <div className="font-bold text-foreground">
+                        {game.crossingPayout}:1
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
