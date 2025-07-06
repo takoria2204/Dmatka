@@ -215,25 +215,59 @@ const GamePlay = () => {
     }
   };
 
-  const activateDemoMode = () => {
+  const activateDemoMode = async () => {
     console.log("🎮 Activating demo mode for gameId:", gameId);
 
-    // Set demo game data
+    // Try to get admin payout settings for demo mode
+    let demoPayouts = {
+      jodiPayout: 95,
+      harufPayout: 9,
+      crossingPayout: 95,
+    };
+
+    try {
+      // Attempt to get current admin settings for more accurate demo
+      const adminToken = localStorage.getItem("admin_token");
+      if (adminToken) {
+        const settingsResponse = await safeFetch("/api/admin/settings", {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+
+        if (settingsResponse && settingsResponse.ok) {
+          const settingsData = await settingsResponse.json();
+          if (settingsData.data) {
+            demoPayouts = {
+              jodiPayout: settingsData.data.jodiPayout || 95,
+              harufPayout: settingsData.data.harufPayout || 9,
+              crossingPayout: settingsData.data.crossingPayout || 95,
+            };
+            console.log(
+              "✅ Using admin-configured payout rates in demo mode:",
+              demoPayouts,
+            );
+          }
+        }
+      }
+    } catch (error) {
+      console.log("💡 Using default payout rates in demo mode");
+    }
+
+    // Set demo game data with current admin rates
     setGame({
       _id: "demo-game-id",
       name:
         gameId?.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) ||
         "Demo Game",
       type: "jodi",
-      description: "Demo game - offline mode",
+      description: "Demo game - using current admin payout rates",
       startTime: "10:00",
       endTime: "17:30",
       resultTime: "18:00",
       minBet: 10,
       maxBet: 5000,
-      jodiPayout: 95,
-      harufPayout: 9,
-      crossingPayout: 95,
+      jodiPayout: demoPayouts.jodiPayout,
+      harufPayout: demoPayouts.harufPayout,
+      crossingPayout: demoPayouts.crossingPayout,
       currentStatus: "open",
       isActive: true,
     });
