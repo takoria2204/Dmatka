@@ -159,6 +159,7 @@ const GamePlay = () => {
       }
 
       console.log("🔄 Fetching game data for gameId:", gameId);
+      console.log("🔗 API URL:", `/api/games/${gameId}`);
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
@@ -169,6 +170,9 @@ const GamePlay = () => {
         },
         signal: controller.signal,
       });
+
+      console.log("📊 Response status:", response.status);
+      console.log("📊 Response headers:", response.headers);
 
       clearTimeout(timeoutId);
 
