@@ -137,13 +137,21 @@ const Withdraw = () => {
       }
 
       if (response.ok) {
-        alert(
-          data?.message ||
-            "Withdrawal request submitted successfully! It will be processed by admin.",
-        );
+        alert(`🎉 WITHDRAWAL REQUEST SUBMITTED!
+
+💰 Amount: ₹${amount.toLocaleString()}
+🏦 Bank: ${formData.bankName}
+⏱️ Processing Time: 24-48 hours
+
+✅ Your request has been sent to admin for approval.
+📱 You will be notified once processed.
+
+Thank you for your patience!`);
         navigate("/wallet");
       } else {
-        alert(data?.message || "Failed to submit withdrawal request");
+        alert(
+          `❌ WITHDRAWAL FAILED\n\n${data?.message || "Failed to submit withdrawal request"}\n\nPlease try again or contact support.`,
+        );
       }
     } catch (error) {
       console.error("Error submitting withdrawal:", error);
