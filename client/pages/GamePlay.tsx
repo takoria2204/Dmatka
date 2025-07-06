@@ -154,15 +154,39 @@ const GamePlay = () => {
   };
 
   const checkConnectivity = async (): Promise<boolean> => {
+    // Circuit breaker: if we've failed multiple times, assume offline
+    if (isOffline || failedAttempts >= 2) {
+      console.log(
+        `🔌 Circuit breaker active (${failedAttempts} failed attempts)`,
+      );
+      return false;
+    }
+
     try {
-      // Quick ping to check if server is reachable
+      // Simple, fast connectivity check
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 1500); // Very short timeout
+
       const response = await fetch("/api/ping", {
         method: "GET",
         cache: "no-cache",
-        signal: AbortSignal.timeout(3000), // 3 second timeout
+        signal: controller.signal,
       });
-      return response.ok;
-    } catch {
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        // Reset failed attempts on success
+        setFailedAttempts(0);
+        return true;
+      } else {
+        setFailedAttempts((prev) => prev + 1);
+        return false;
+      }
+    } catch (error) {
+      console.log("🔌 Connectivity check failed");
+      setFailedAttempts((prev) => prev + 1);
+      setIsOffline(true);
       return false;
     }
   };
