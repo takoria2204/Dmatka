@@ -96,14 +96,26 @@ const GamePlay = () => {
   });
 
   useEffect(() => {
+    console.log("🔍 GamePlay useEffect - checking auth...");
+    console.log("User:", user);
+    console.log("GameId:", gameId);
+    console.log(
+      "Token:",
+      localStorage.getItem("matka_token") ? "Present" : "Missing",
+    );
+
     if (!user) {
+      console.log("❌ No user found, redirecting to login");
       navigate("/login");
       return;
     }
     if (!gameId) {
+      console.log("❌ No gameId found, redirecting to games");
       navigate("/games");
       return;
     }
+
+    console.log("✅ Auth check passed, fetching data...");
     fetchGameData();
     fetchWalletData();
   }, [user, gameId, navigate]);
