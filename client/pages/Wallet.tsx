@@ -15,6 +15,7 @@ import {
   AlertCircle,
   TrendingUp,
   Wallet as WalletIcon,
+  DollarSign,
 } from "lucide-react";
 
 interface WalletData {
