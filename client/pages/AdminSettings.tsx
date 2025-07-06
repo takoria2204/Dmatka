@@ -988,13 +988,14 @@ const AdminSettings = () => {
                     </Label>
                     <Input
                       type="number"
-                      value={settings.logRetentionDays}
-                      onChange={(e) =>
+                      value={settings.logRetentionDays || ""}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
                         updateSetting(
                           "logRetentionDays",
-                          parseInt(e.target.value),
-                        )
-                      }
+                          isNaN(value) ? 0 : value,
+                        );
+                      }}
                       className="bg-[#1a1a1a] border-gray-600 text-white"
                     />
                   </div>
