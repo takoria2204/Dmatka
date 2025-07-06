@@ -138,27 +138,72 @@ const GamePlay = () => {
 
   const fetchGameData = async () => {
     try {
+      const token = localStorage.getItem("matka_token");
+      if (!token) {
+        console.log("No auth token found, redirecting to login");
+        navigate("/login");
+        return;
+      }
+
+      console.log("🔄 Fetching game data for gameId:", gameId);
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
       const response = await fetch(`/api/games/${gameId}`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("matka_token")}`,
+          Authorization: `Bearer ${token}`,
         },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
-        console.log("🎮 Game data received:", data.data);
+        console.log("✅ Game data received:", data.data);
         console.log("🎯 Payout rates:", {
           jodi: data.data.jodiPayout,
           haruf: data.data.harufPayout,
           crossing: data.data.crossingPayout,
         });
         setGame(data.data);
+      } else if (response.status === 401) {
+        console.log("Authentication failed, redirecting to login");
+        localStorage.removeItem("matka_token");
+        navigate("/login");
+      } else if (response.status === 404) {
+        console.log("Game not found, redirecting to games list");
+        navigate("/games");
       } else {
+        console.error("Failed to fetch game data:", response.status);
+        // Don't navigate away, just show error state
+        setGame(null);
+      }
+    } catch (error: any) {
+      console.error("Error fetching game:", error);
+
+      if (error.name === "AbortError") {
+        console.log("Game fetch timed out");
+        toast({
+          variant: "destructive",
+          title: "Connection Timeout",
+          description:
+            "Failed to load game data. Please check your connection and try again.",
+        });
+      } else if (error.message.includes("Failed to fetch")) {
+        console.log("Network error - server may be down");
+        toast({
+          variant: "destructive",
+          title: "Server Connection Failed",
+          description: "Unable to connect to server. Please try again later.",
+        });
+      } else {
+        // Other errors, redirect to games
         navigate("/games");
       }
-    } catch (error) {
-      console.error("Error fetching game:", error);
-      navigate("/games");
+
+      setGame(null);
     } finally {
       setLoading(false);
     }
