@@ -191,7 +191,7 @@ const GamePlay = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 1500); // Very short timeout
 
-      const response = await fetch("/api/ping", {
+      const response = await safeFetch("/api/ping", {
         method: "GET",
         cache: "no-cache",
         signal: controller.signal,
