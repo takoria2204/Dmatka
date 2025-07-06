@@ -58,11 +58,22 @@ export const getAllGames: RequestHandler = async (req, res) => {
   }
 };
 
-// Get specific game by ID
+// Get specific game by ID or name
 export const getGameById: RequestHandler = async (req, res) => {
   try {
     const { gameId } = req.params;
-    const game = await Game.findById(gameId);
+
+    let game;
+    // Check if gameId is a valid ObjectId (24 character hex string)
+    if (gameId.match(/^[0-9a-fA-F]{24}$/)) {
+      // It's a valid ObjectId, search by _id
+      game = await Game.findById(gameId);
+    } else {
+      // It's not a valid ObjectId, search by name (case-insensitive)
+      game = await Game.findOne({
+        name: { $regex: new RegExp(gameId.replace(/-/g, " "), "i") },
+      });
+    }
 
     if (!game) {
       res.status(404).json({ message: "Game not found" });
