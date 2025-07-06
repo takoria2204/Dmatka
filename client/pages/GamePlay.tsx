@@ -193,9 +193,20 @@ const GamePlay = () => {
         navigate("/login");
       } else if (response.status === 404) {
         console.log("Game not found, redirecting to games list");
+        toast({
+          variant: "destructive",
+          title: "Game Not Found",
+          description:
+            "The requested game could not be found. Redirecting to games list.",
+        });
         navigate("/games");
       } else {
         console.error("Failed to fetch game data:", response.status);
+        toast({
+          variant: "destructive",
+          title: "Server Error",
+          description: `Failed to load game data (Error ${response.status}). Please try again.`,
+        });
         // Don't navigate away, just show error state
         setGame(null);
       }
