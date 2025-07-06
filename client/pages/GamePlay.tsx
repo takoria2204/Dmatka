@@ -199,7 +199,7 @@ const GamePlay = () => {
 
       clearTimeout(timeoutId);
 
-      if (response.ok) {
+      if (response && response.ok) {
         // Reset failed attempts on success
         setFailedAttempts(0);
         return true;
