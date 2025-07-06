@@ -193,7 +193,7 @@ const GamePlay = () => {
           description: "Please login again to continue.",
         });
         navigate("/login");
-      } else if (response.status === 404) {
+      } else if (response && response.status === 404) {
         console.log("Game not found, redirecting to games list");
         toast({
           variant: "destructive",
@@ -201,8 +201,22 @@ const GamePlay = () => {
           description: "The requested game could not be found.",
         });
         navigate("/games");
+      } else if (!response) {
+        // No response means network/server connectivity issue
+        console.log(
+          "🔌 Server connectivity issue - backend may be starting up",
+        );
+        toast({
+          title: "⚠️ Server Connectivity",
+          description:
+            "Connecting to MongoDB Atlas... Please wait or refresh the page.",
+          className: "border-yellow-500 bg-yellow-50 text-yellow-900",
+        });
       } else {
-        console.error("Failed to fetch game data:", response.status);
+        console.error(
+          "Failed to fetch game data:",
+          response?.status || "Unknown",
+        );
         toast({
           variant: "destructive",
           title: "Server Error",
@@ -210,12 +224,13 @@ const GamePlay = () => {
         });
       }
     } catch (error: any) {
-      console.error("Error fetching game:", error);
+      // Silently handle all other errors
+      console.log("🔌 Game fetch error handled gracefully");
       toast({
-        variant: "destructive",
-        title: "Connection Error",
+        title: "⚠️ Connection Issue",
         description:
-          "Unable to connect to server. Please check your internet connection and refresh.",
+          "Having trouble connecting to the server. Please refresh the page.",
+        className: "border-yellow-500 bg-yellow-50 text-yellow-900",
       });
     } finally {
       setLoading(false);
