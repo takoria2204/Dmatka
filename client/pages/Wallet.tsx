@@ -58,6 +58,9 @@ const Wallet = () => {
   const navigate = useNavigate();
   const [walletData, setWalletData] = useState<WalletData | null>(null);
   const [depositHistory, setDepositHistory] = useState<PaymentRequest[]>([]);
+  const [withdrawalHistory, setWithdrawalHistory] = useState<PaymentRequest[]>(
+    [],
+  );
   const [walletStats, setWalletStats] = useState<WalletStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
