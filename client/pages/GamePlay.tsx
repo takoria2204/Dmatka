@@ -684,13 +684,13 @@ const GamePlay = () => {
     return (
       <div className="min-h-screen bg-matka-dark flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
-          <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
+          <Clock className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-foreground mb-4">
-            Unable to Load Game
+            Demo Mode Active
           </h1>
           <p className="text-muted-foreground mb-6">
-            There seems to be a connection issue. Please check your internet
-            connection and try again.
+            Running in offline demo mode. You can explore the betting interface
+            with sample data.
           </p>
           <div className="flex gap-2 justify-center">
             <Button
