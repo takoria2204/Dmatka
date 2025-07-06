@@ -229,15 +229,36 @@ const GamePlay = () => {
         console.log("Network error - server may be down");
         toast({
           variant: "destructive",
-          title: "Server Connection Failed",
-          description: "Unable to connect to server. Please try again later.",
+          title: "Connection Failed",
+          description: "Working in offline mode with demo data.",
+        });
+
+        // Set fallback demo game data for testing
+        setGame({
+          _id: "demo-game-id",
+          name:
+            gameId
+              ?.replace(/-/g, " ")
+              .replace(/\b\w/g, (l) => l.toUpperCase()) || "Demo Game",
+          type: "jodi",
+          description: "Demo game for offline testing",
+          startTime: "10:00",
+          endTime: "17:30",
+          resultTime: "18:00",
+          minBet: 10,
+          maxBet: 5000,
+          jodiPayout: 95,
+          harufPayout: 9,
+          crossingPayout: 95,
+          currentStatus: "open",
+          isActive: true,
         });
       } else {
         // Other errors, redirect to games
         navigate("/games");
       }
 
-      setGame(null);
+      // Don't set game to null, let fallback data handle it
     } finally {
       setLoading(false);
     }
