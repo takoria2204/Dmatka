@@ -739,9 +739,14 @@ const GamePlay = () => {
               <p className="text-muted-foreground">{game.description}</p>
             </div>
           </div>
-          <Badge className={getStatusColor(game.currentStatus)}>
-            {getStatusText(game.currentStatus)}
-          </Badge>
+          <div className="flex gap-2">
+            <Badge className={getStatusColor(game.currentStatus)}>
+              {getStatusText(game.currentStatus)}
+            </Badge>
+            {game._id === "demo-game-id" && (
+              <Badge className="bg-yellow-500 text-black">Demo Mode</Badge>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
