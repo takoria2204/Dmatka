@@ -123,9 +123,14 @@ const GamePlay = () => {
     console.log("Token:", token ? "Present" : "Missing");
     console.log("Navigator online:", navigator.onLine);
 
-    // Immediate offline mode activation in certain conditions
-    if (!token || !navigator.onLine) {
-      console.log("🎮 Immediate demo mode activation (no auth or offline)");
+    // Check for authentication but don't immediately activate demo mode
+    if (!token) {
+      console.log("⚠️ No auth token found, will try to fetch anyway");
+      // Don't immediately activate demo mode - let the fetch attempt happen first
+    }
+
+    if (!navigator.onLine) {
+      console.log("🔌 Browser reports offline, activating demo mode");
       activateDemoMode();
       setLoading(false);
       return;
