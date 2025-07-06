@@ -243,7 +243,7 @@ Thank you for your patience!`);
                 htmlFor="amount"
                 className="text-foreground text-lg mb-2 block"
               >
-                Withdrawal Amount *
+                Withdrawal Amount * (Min: ₹100)
               </Label>
               <Input
                 id="amount"
@@ -253,17 +253,31 @@ Thank you for your patience!`);
                 value={formData.amount}
                 onChange={handleChange}
                 className="bg-muted border-border text-foreground text-lg py-3"
-                min="1"
+                min="100"
                 max={walletData?.winningBalance || 0}
                 required
               />
-              {formData.amount &&
-                parseFloat(formData.amount) >
-                  (walletData?.winningBalance || 0) && (
-                  <p className="text-red-500 text-sm mt-1">
-                    Amount exceeds available balance
-                  </p>
-                )}
+              {formData.amount && (
+                <div className="mt-1">
+                  {parseFloat(formData.amount) >
+                    (walletData?.winningBalance || 0) && (
+                    <p className="text-red-500 text-sm">
+                      Amount exceeds available balance
+                    </p>
+                  )}
+                  {parseFloat(formData.amount) < 100 &&
+                    parseFloat(formData.amount) > 0 && (
+                      <p className="text-yellow-500 text-sm">
+                        Minimum withdrawal amount is ₹100
+                      </p>
+                    )}
+                  {parseFloat(formData.amount) >= 100 &&
+                    parseFloat(formData.amount) <=
+                      (walletData?.winningBalance || 0) && (
+                      <p className="text-green-500 text-sm">✓ Valid amount</p>
+                    )}
+                </div>
+              )}
             </div>
 
             <div>
