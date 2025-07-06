@@ -67,6 +67,18 @@ const Withdraw = () => {
       return;
     }
 
+    const amount = parseFloat(formData.amount);
+
+    if (amount < 100) {
+      alert("Minimum withdrawal amount is ₹100");
+      return;
+    }
+
+    if (!walletData || walletData.winningBalance < amount) {
+      alert("Insufficient winning balance for withdrawal");
+      return;
+    }
+
     if (
       !formData.bankName ||
       !formData.accountNumber ||
@@ -77,9 +89,16 @@ const Withdraw = () => {
       return;
     }
 
-    const amount = parseFloat(formData.amount);
-    if (!walletData || walletData.winningBalance < amount) {
-      alert("Insufficient winning balance for withdrawal");
+    if (
+      formData.accountNumber.length < 8 ||
+      formData.accountNumber.length > 18
+    ) {
+      alert("Please enter a valid account number (8-18 digits)");
+      return;
+    }
+
+    if (formData.ifscCode.length !== 11) {
+      alert("Please enter a valid IFSC code (11 characters)");
       return;
     }
 
