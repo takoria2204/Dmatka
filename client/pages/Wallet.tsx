@@ -108,6 +108,11 @@ const Wallet = () => {
         setDepositHistory(depositData.data.deposits);
       }
 
+      if (withdrawalResponse.ok) {
+        const withdrawalData = await withdrawalResponse.json();
+        setWithdrawalHistory(withdrawalData.data.transactions || []);
+      }
+
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setWalletStats(statsData.data);
