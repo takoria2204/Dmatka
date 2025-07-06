@@ -102,12 +102,28 @@ const AdminResults = () => {
       return;
     }
 
-    fetchData();
+    // Update payout rates first, then fetch data
+    updatePayoutRates().then(() => {
+      fetchData();
+    });
 
     // Auto-refresh every 30 seconds to get real-time updates
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [navigate]);
+
+  const updatePayoutRates = async () => {
+    try {
+      const token = localStorage.getItem("admin_token");
+      await fetch("/api/admin/games/update-payouts", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("✅ Payout rates updated");
+    } catch (error) {
+      console.error("Failed to update payout rates:", error);
+    }
+  };
 
   const fetchData = async () => {
     try {
