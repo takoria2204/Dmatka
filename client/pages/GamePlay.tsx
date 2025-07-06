@@ -96,45 +96,9 @@ const GamePlay = () => {
     crossing: ["12-34", "56-78"],
   });
 
-  // Circuit breaker to prevent repeated failed attempts
-  const [isOffline, setIsOffline] = useState(false);
-  const [failedAttempts, setFailedAttempts] = useState(0);
-
-  // Safe fetch wrapper to prevent console errors
-  const safeFetch = async (
-    url: string,
-    options?: RequestInit,
-  ): Promise<Response | null> => {
-    try {
-      // Add AbortController timeout to prevent hanging requests
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-      const response = await fetch(url, {
-        ...options,
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-      return response;
-    } catch (error: any) {
-      // Completely silence all fetch errors including network failures
-      if (error.name === "AbortError") {
-        // Request was aborted due to timeout
-        return null;
-      }
-      if (error.message?.includes("Failed to fetch")) {
-        // Network connectivity issue
-        return null;
-      }
-      // All other errors
-      return null;
-    }
-  };
-
   useEffect(() => {
     console.log(
-      "🔍 GamePlay useEffect - checking auth and fetching real data...",
+      "🔍 GamePlay useEffect - fetching real data from MongoDB Atlas...",
     );
     console.log("User:", user);
     console.log("GameId:", gameId);
@@ -154,7 +118,9 @@ const GamePlay = () => {
       return;
     }
 
-    console.log("✅ Auth check passed, fetching real data from MongoDB...");
+    console.log(
+      "✅ Auth check passed, fetching real data from MongoDB Atlas...",
+    );
     fetchGameData();
     fetchWalletData();
   }, [user, gameId, navigate]);
@@ -169,135 +135,6 @@ const GamePlay = () => {
     return () => clearInterval(timer);
   }, [game]);
 
-  const updatePayoutRates = async () => {
-    try {
-      const token = localStorage.getItem("matka_token");
-      const response = await fetch("/api/admin/games/update-payouts", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      if (response.ok) {
-        console.log("✅ Payout rates updated successfully");
-      }
-    } catch (error) {
-      console.error("Failed to update payout rates:", error);
-    }
-  };
-
-  const checkConnectivity = async (): Promise<boolean> => {
-    // Circuit breaker: if we've failed multiple times, assume offline
-    if (isOffline || failedAttempts >= 2) {
-      console.log(
-        `🔌 Circuit breaker active (${failedAttempts} failed attempts)`,
-      );
-      return false;
-    }
-
-    try {
-      // Simple, fast connectivity check
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1500); // Very short timeout
-
-      const response = await safeFetch("/api/ping", {
-        method: "GET",
-        cache: "no-cache",
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (response && response.ok) {
-        // Reset failed attempts on success
-        setFailedAttempts(0);
-        return true;
-      } else {
-        setFailedAttempts((prev) => prev + 1);
-        return false;
-      }
-    } catch (error) {
-      console.log("🔌 Connectivity check failed");
-      setFailedAttempts((prev) => prev + 1);
-      setIsOffline(true);
-      return false;
-    }
-  };
-
-  const activateDemoMode = async () => {
-    console.log("🎮 Activating demo mode for gameId:", gameId);
-
-    // Try to get admin payout settings for demo mode
-    let demoPayouts = {
-      jodiPayout: 95,
-      harufPayout: 9,
-      crossingPayout: 95,
-    };
-
-    try {
-      // Attempt to get current admin settings for more accurate demo
-      const adminToken = localStorage.getItem("admin_token");
-      if (adminToken) {
-        const settingsResponse = await safeFetch("/api/admin/settings", {
-          headers: { Authorization: `Bearer ${adminToken}` },
-        });
-
-        if (settingsResponse && settingsResponse.ok) {
-          const settingsData = await settingsResponse.json();
-          if (settingsData.data) {
-            demoPayouts = {
-              jodiPayout: settingsData.data.jodiPayout || 95,
-              harufPayout: settingsData.data.harufPayout || 9,
-              crossingPayout: settingsData.data.crossingPayout || 95,
-            };
-            console.log(
-              "✅ Using admin-configured payout rates in demo mode:",
-              demoPayouts,
-            );
-          }
-        }
-      }
-    } catch (error) {
-      console.log("💡 Using default payout rates in demo mode");
-    }
-
-    // Set demo game data with current admin rates
-    setGame({
-      _id: "demo-game-id",
-      name:
-        gameId?.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()) ||
-        "Demo Game",
-      type: "jodi",
-      description: "Demo game - using current admin payout rates",
-      startTime: "10:00",
-      endTime: "17:30",
-      resultTime: "18:00",
-      minBet: 10,
-      maxBet: 5000,
-      jodiPayout: demoPayouts.jodiPayout,
-      harufPayout: demoPayouts.harufPayout,
-      crossingPayout: demoPayouts.crossingPayout,
-      currentStatus: "open",
-      isActive: true,
-    });
-
-    // Set demo wallet data
-    setWallet({
-      depositBalance: 1000,
-      winningBalance: 500,
-      totalDeposits: 2000,
-      totalWithdrawals: 500,
-    });
-
-    toast({
-      title: "Demo Mode Active",
-      description:
-        "Running offline with demo data. All features available for testing!",
-      className: "border-yellow-500 bg-yellow-50 text-yellow-900",
-    });
-  };
-
   const fetchGameData = async () => {
     try {
       const token = localStorage.getItem("matka_token");
@@ -311,7 +148,6 @@ const GamePlay = () => {
         "🔄 Fetching REAL game data from MongoDB Atlas for gameId:",
         gameId,
       );
-      console.log("🔑 Using token:", token.substring(0, 20) + "...");
 
       const response = await fetch(`/api/games/${gameId}`, {
         headers: {
@@ -320,30 +156,23 @@ const GamePlay = () => {
         },
       });
 
-      if (response && response.ok) {
+      if (response.ok) {
         const data = await response.json();
-        console.log("✅ Game data received:", data.data);
-        console.log("🎯 Current payout rates from server:", {
+        console.log("✅ REAL Game data from MongoDB:", data.data);
+        console.log("🎯 Current payout rates from MongoDB:", {
           jodi: data.data.jodiPayout,
           haruf: data.data.harufPayout,
           crossing: data.data.crossingPayout,
         });
 
-        // Ensure we're using the server data and not falling back to demo
-        setGame({
-          ...data.data,
-          // Force these from server response to avoid any cache issues
-          jodiPayout: data.data.jodiPayout || 95,
-          harufPayout: data.data.harufPayout || 9,
-          crossingPayout: data.data.crossingPayout || 95,
-        });
+        setGame(data.data);
 
-        console.log("🎮 Game state set with payout rates:", {
-          jodi: data.data.jodiPayout || 95,
-          haruf: data.data.harufPayout || 9,
-          crossing: data.data.crossingPayout || 95,
+        toast({
+          title: "✅ Real Data Loaded",
+          description: `Game data fetched from MongoDB Atlas. Payout rates: Jodi ${data.data.jodiPayout}:1, Haruf ${data.data.harufPayout}:1, Crossing ${data.data.crossingPayout}:1`,
+          className: "border-green-500 bg-green-50 text-green-900",
         });
-      } else if (response && response.status === 401) {
+      } else if (response.status === 401) {
         console.log("Authentication failed, redirecting to login");
         localStorage.removeItem("matka_token");
         localStorage.removeItem("matka_user");
@@ -353,20 +182,16 @@ const GamePlay = () => {
           description: "Please login again to continue.",
         });
         navigate("/login");
-      } else if (response && response.status === 404) {
+      } else if (response.status === 404) {
         console.log("Game not found, redirecting to games list");
         toast({
           variant: "destructive",
           title: "Game Not Found",
-          description:
-            "The requested game could not be found. Redirecting to games list.",
+          description: "The requested game could not be found.",
         });
         navigate("/games");
       } else {
-        console.error(
-          "Failed to fetch game data:",
-          response?.status || "No response",
-        );
+        console.error("Failed to fetch game data:", response.status);
         toast({
           variant: "destructive",
           title: "Server Error",
@@ -388,102 +213,30 @@ const GamePlay = () => {
 
   const fetchWalletData = async () => {
     try {
-      // Skip wallet fetch if we already have demo wallet data
-      if (wallet && wallet.depositBalance === 1000) {
-        console.log("💡 Already using demo wallet data, skipping fetch");
-        return;
-      }
-
-      // Check connectivity first
-      const hasConnectivity = await checkConnectivity();
-      if (!hasConnectivity) {
-        console.log("🔌 No connectivity for wallet, using demo data");
-        setWallet({
-          depositBalance: 1000,
-          winningBalance: 500,
-          totalDeposits: 2000,
-          totalWithdrawals: 500,
-        });
-        return;
-      }
-
       const token = localStorage.getItem("matka_token");
       if (!token) {
-        console.log("No auth token for wallet fetch, using demo data");
-        setWallet({
-          depositBalance: 1000,
-          winningBalance: 500,
-          totalDeposits: 2000,
-          totalWithdrawals: 500,
-        });
+        console.log("❌ No auth token for wallet fetch");
         return;
       }
 
-      console.log("���� Fetching wallet data...");
+      console.log("🔄 Fetching REAL wallet data from MongoDB Atlas...");
 
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
-
-      const response = await safeFetch("/api/wallet/balance", {
+      const response = await fetch("/api/wallet/balance", {
         headers: {
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
-      if (response && response.ok) {
+      if (response.ok) {
         const data = await response.json();
-        console.log("✅ Wallet data received:", data.data);
+        console.log("✅ REAL Wallet data from MongoDB:", data.data);
         setWallet(data.data);
-      } else if (response && response.status === 401) {
-        console.log("Wallet auth failed");
-        localStorage.removeItem("matka_token");
-        localStorage.removeItem("matka_user");
-        toast({
-          variant: "destructive",
-          title: "Session Expired",
-          description: "Please login again to access your wallet.",
-        });
-        navigate("/login");
-      } else if (response) {
-        console.error("Failed to fetch wallet data:", response.status);
-        // Set demo wallet data for errors
-        setWallet({
-          depositBalance: 1000,
-          winningBalance: 500,
-          totalDeposits: 2000,
-          totalWithdrawals: 500,
-        });
       } else {
-        // No response (fetch failed), use demo wallet
-        console.log("🔌 No wallet response, using demo data");
-        setWallet({
-          depositBalance: 1000,
-          winningBalance: 500,
-          totalDeposits: 2000,
-          totalWithdrawals: 500,
-        });
+        console.error("Failed to fetch wallet data:", response.status);
       }
-    } catch (error: any) {
-      console.error("Error fetching wallet:", error);
-
-      if (error.name === "AbortError") {
-        console.log("Wallet fetch timed out");
-      } else if (error.message.includes("Failed to fetch")) {
-        console.log("Network error fetching wallet - using demo data");
-      }
-
-      // Set demo wallet data for better offline experience
-      setWallet({
-        depositBalance: 1000, // Demo balance for testing
-        winningBalance: 500,
-        totalDeposits: 2000,
-        totalWithdrawals: 500,
-      });
-
-      console.log("💡 Using demo wallet data for offline mode");
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
     }
   };
 
@@ -494,237 +247,100 @@ const GamePlay = () => {
     const currentTime = now.toTimeString().slice(0, 5);
 
     let targetTime = "";
-    if (currentTime < game.startTime) {
-      targetTime = game.startTime;
-    } else if (currentTime < game.endTime) {
+    if (game.currentStatus === "open") {
       targetTime = game.endTime;
-    } else if (currentTime < game.resultTime) {
+    } else if (game.currentStatus === "closed") {
       targetTime = game.resultTime;
+    } else if (game.currentStatus === "waiting") {
+      targetTime = game.startTime;
     }
 
     if (targetTime) {
-      const [hours, minutes] = targetTime.split(":");
-      const target = new Date();
-      target.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+      const [hours, minutes] = targetTime.split(":").map(Number);
+      const [currentHours, currentMinutes] = currentTime.split(":").map(Number);
 
-      if (target < now) {
-        target.setDate(target.getDate() + 1);
-      }
+      const targetMinutes = hours * 60 + minutes;
+      const currentTotalMinutes = currentHours * 60 + currentMinutes;
 
-      const diff = target.getTime() - now.getTime();
-      const hours_left = Math.floor(diff / (1000 * 60 * 60));
-      const minutes_left = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-      const seconds_left = Math.floor((diff % (1000 * 60)) / 1000);
+      let diffMinutes = targetMinutes - currentTotalMinutes;
+      if (diffMinutes < 0) diffMinutes += 24 * 60; // Next day
+
+      const remainingHours = Math.floor(diffMinutes / 60);
+      const remainingMins = diffMinutes % 60;
 
       setCountdown({
-        hours: hours_left,
-        minutes: minutes_left,
-        seconds: seconds_left,
+        hours: remainingHours,
+        minutes: remainingMins,
+        seconds: 59 - now.getSeconds(),
       });
     }
   };
 
   const handleNumberSelect = (number: string) => {
     setBetData((prev) => ({ ...prev, betNumber: number }));
-  };
-
-  const handlePlaceBet = () => {
-    if (!betData.betNumber || !betData.betAmount) {
-      toast({
-        variant: "destructive",
-        title: "Incomplete Bet Details",
-        description: "Please select a number and enter bet amount",
-      });
-      return;
-    }
-
-    const amount = parseFloat(betData.betAmount);
-    if (isNaN(amount) || amount <= 0) {
-      toast({
-        variant: "destructive",
-        title: "Invalid Amount",
-        description: "Please enter a valid bet amount",
-      });
-      return;
-    }
-
-    if (!game) return;
-
-    if (amount < game.minBet) {
-      toast({
-        variant: "destructive",
-        title: "Amount Too Low",
-        description: `Minimum bet amount is ₹${game.minBet}`,
-      });
-      return;
-    }
-
-    if (amount > game.maxBet) {
-      toast({
-        variant: "destructive",
-        title: "Amount Too High",
-        description: `Maximum bet amount is ₹${game.maxBet}`,
-      });
-      return;
-    }
-
-    if (!wallet || wallet.depositBalance < amount) {
-      toast({
-        variant: "destructive",
-        title: "Insufficient Balance",
-        description: `Add money to your wallet. Current balance: ₹${wallet?.depositBalance || 0}`,
-        action: (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/add-money")}
-          >
-            Add Money
-          </Button>
-        ),
-      });
-      return;
-    }
-
     setShowBetModal(true);
   };
 
-  const confirmBet = async () => {
-    if (placing) return;
+  const handlePlaceBet = async () => {
+    if (!betData.betNumber || !betData.betAmount) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Bet",
+        description: "Please select a number and enter bet amount.",
+      });
+      return;
+    }
+
+    if (parseFloat(betData.betAmount) < game!.minBet) {
+      toast({
+        variant: "destructive",
+        title: "Minimum Bet",
+        description: `Minimum bet amount is ₹${game!.minBet}`,
+      });
+      return;
+    }
+
+    if (parseFloat(betData.betAmount) > game!.maxBet) {
+      toast({
+        variant: "destructive",
+        title: "Maximum Bet",
+        description: `Maximum bet amount is ₹${game!.maxBet}`,
+      });
+      return;
+    }
 
     setPlacing(true);
 
+    const betPayload = {
+      gameId: game!._id,
+      betType: selectedBetType,
+      betNumber: betData.betNumber,
+      betAmount: parseFloat(betData.betAmount),
+      harufPosition:
+        selectedBetType === "haruf" ? betData.harufPosition : undefined,
+    };
+
     try {
       const token = localStorage.getItem("matka_token");
-      if (!token) {
-        toast({
-          variant: "destructive",
-          title: "Authentication Required",
-          description: "Please login again to place bet",
-        });
-        navigate("/login");
-        return;
-      }
 
-      const betPayload = {
-        gameId,
-        betType: selectedBetType,
-        betNumber: betData.betNumber,
-        betAmount: parseFloat(betData.betAmount),
-        betData: {
-          jodiNumber:
-            selectedBetType === "jodi" ? betData.betNumber : undefined,
-          harufDigit:
-            selectedBetType === "haruf" ? betData.betNumber : undefined,
-          harufPosition:
-            selectedBetType === "haruf" ? betData.harufPosition : undefined,
-          crossingCombination:
-            selectedBetType === "crossing"
-              ? betData.crossingCombination
-              : undefined,
+      console.log("🎯 Placing REAL bet in MongoDB:", betPayload);
+
+      const response = await fetch("/api/games/place-bet", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-      };
-
-      console.log("🎯 Placing bet:", betPayload);
-
-      // Check if in demo mode
-      if (game._id === "demo-game-id") {
-        // Demo mode - simulate successful bet placement
-        toast({
-          title: "✅ Demo Bet Placed!",
-          description: `₹${betData.betAmount} demo bet placed on ${selectedBetType.toUpperCase()} - ${betData.betNumber}`,
-          className: "border-yellow-500 bg-yellow-50 text-yellow-900",
-        });
-
-        // Update demo wallet balance
-        setWallet((prev) =>
-          prev
-            ? {
-                ...prev,
-                depositBalance:
-                  prev.depositBalance - parseFloat(betData.betAmount),
-              }
-            : null,
-        );
-
-        // Close modal and reset form
-        setShowBetModal(false);
-        setBetData({
-          betNumber: "",
-          betAmount: "",
-          harufPosition: "first",
-          crossingCombination: "",
-        });
-
-        return;
-      }
-
-      // Use XMLHttpRequest to avoid fetch stream conflicts
-      const data: any = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/api/games/place-bet", true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-
-        xhr.onload = function () {
-          console.log("📊 XHR status:", xhr.status);
-          console.log("📊 XHR response:", xhr.responseText);
-
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const responseData = JSON.parse(xhr.responseText);
-              resolve(responseData);
-            } catch (parseError) {
-              console.error("❌ Failed to parse JSON:", parseError);
-              resolve({
-                success: false,
-                message: "Invalid response format",
-                type: "parse_error",
-              });
-            }
-          } else {
-            try {
-              const errorData = JSON.parse(xhr.responseText);
-              // Add proper error type based on status code
-              if (xhr.status === 401) {
-                errorData.type = "authentication_error";
-              } else if (xhr.status === 400) {
-                errorData.type = errorData.type || "validation_error";
-              }
-              resolve(errorData);
-            } catch (parseError) {
-              const errorType =
-                xhr.status === 401 ? "authentication_error" : "server_error";
-              resolve({
-                success: false,
-                message: `Server error (${xhr.status})`,
-                type: errorType,
-              });
-            }
-          }
-        };
-
-        xhr.onerror = function () {
-          console.error("❌ XHR network error");
-          reject(new Error("Network error"));
-        };
-
-        xhr.ontimeout = function () {
-          console.error("❌ XHR timeout");
-          reject(new Error("Request timeout"));
-        };
-
-        xhr.timeout = 30000; // 30 second timeout
-        xhr.send(JSON.stringify(betPayload));
+        body: JSON.stringify(betPayload),
       });
 
-      console.log("📊 Final data:", data);
+      if (response.ok) {
+        const data = await response.json();
+        console.log("✅ REAL bet placed in MongoDB:", data);
 
-      if (data?.success) {
-        // Success - show success toast
         toast({
           title: "✅ Bet Placed Successfully!",
-          description: `₹${betData.betAmount} deducted. Bet placed on ${selectedBetType.toUpperCase()} - ${betData.betNumber}`,
+          description: `₹${betData.betAmount} bet placed on ${selectedBetType.toUpperCase()} - ${betData.betNumber}. Saved to MongoDB Atlas!`,
           className: "border-green-500 bg-green-50 text-green-900",
         });
 
@@ -748,16 +364,13 @@ const GamePlay = () => {
           crossingCombination: "",
         });
 
-        // Refresh wallet data for consistency
+        // Refresh wallet data
         await fetchWalletData();
       } else {
-        // Error handling based on response
-        const errorMessage = data?.message || "Failed to place bet";
+        const errorData = await response.json();
+        const errorMessage = errorData?.message || "Failed to place bet";
 
-        if (
-          data?.type === "insufficient_balance" ||
-          errorMessage.includes("Insufficient")
-        ) {
+        if (errorMessage.includes("Insufficient")) {
           toast({
             variant: "destructive",
             title: "Insufficient Balance",
@@ -772,26 +385,6 @@ const GamePlay = () => {
               </Button>
             ),
           });
-        } else if (
-          errorMessage.includes("not open") ||
-          errorMessage.includes("closed")
-        ) {
-          toast({
-            variant: "destructive",
-            title: "Betting Closed",
-            description: "This game is not accepting bets right now",
-          });
-        } else if (
-          data?.type === "authentication_error" ||
-          errorMessage.includes("login") ||
-          errorMessage.includes("unauthorized")
-        ) {
-          toast({
-            variant: "destructive",
-            title: "Session Expired",
-            description: "Please login again",
-          });
-          navigate("/login");
         } else {
           toast({
             variant: "destructive",
@@ -839,66 +432,47 @@ const GamePlay = () => {
       case "result_declared":
         return "Result Declared";
       default:
-        return status;
-    }
-  };
-
-  const calculatePotentialWinning = () => {
-    if (!game || !betData.betAmount) return 0;
-    const amount = parseFloat(betData.betAmount);
-    if (isNaN(amount)) return 0;
-
-    switch (selectedBetType) {
-      case "jodi":
-        return amount * game.jodiPayout;
-      case "haruf":
-        return amount * game.harufPayout;
-      case "crossing":
-        return amount * game.crossingPayout;
-      default:
-        return 0;
+        return "Unknown";
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-matka-dark flex items-center justify-center">
-        <div className="animate-spin w-8 h-8 border-4 border-matka-gold border-t-transparent rounded-full"></div>
+      <div className="min-h-screen bg-matka-dark text-white p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin w-12 h-12 border-4 border-matka-gold border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="text-matka-gold">
+                Loading real game data from MongoDB Atlas...
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (!game && !loading) {
+  if (!game) {
     return (
-      <div className="min-h-screen bg-matka-dark flex items-center justify-center">
-        <div className="text-center max-w-md mx-auto p-6">
-          <Clock className="h-16 w-16 text-yellow-400 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-4">
-            Demo Mode Active
-          </h1>
-          <p className="text-muted-foreground mb-6">
-            Running in offline demo mode. You can explore the betting interface
-            with sample data.
-          </p>
-          <div className="flex gap-2 justify-center">
-            <Button
-              onClick={() => {
-                setLoading(true);
-                fetchGameData();
-                fetchWalletData();
-              }}
-              className="bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => navigate("/games")}
-              className="border-border text-foreground hover:bg-muted"
-            >
-              Back to Games
-            </Button>
+      <div className="min-h-screen bg-matka-dark text-white p-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Game Not Available
+              </h2>
+              <p className="text-muted-foreground mb-4">
+                Unable to load game data from MongoDB Atlas.
+              </p>
+              <Button
+                onClick={() => navigate("/games")}
+                className="bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
+              >
+                Back to Games
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -906,34 +480,34 @@ const GamePlay = () => {
   }
 
   return (
-    <div className="min-h-screen bg-matka-dark">
-      <div className="container mx-auto px-4 py-6">
+    <div className="min-h-screen bg-matka-dark text-white p-4">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Button
-              variant="ghost"
+              variant="outline"
               size="sm"
               onClick={() => navigate("/games")}
-              className="text-foreground hover:text-matka-gold"
+              className="border-matka-gold text-matka-gold hover:bg-matka-gold/10"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Games
             </Button>
             <div>
-              <h1 className="text-2xl font-bold text-foreground">
+              <h1 className="text-3xl font-bold text-matka-gold">
                 {game.name}
               </h1>
               <p className="text-muted-foreground">{game.description}</p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Badge className={getStatusColor(game.currentStatus)}>
+          <div className="flex items-center gap-3">
+            <Badge
+              className={`${getStatusColor(game.currentStatus)} text-white`}
+            >
               {getStatusText(game.currentStatus)}
             </Badge>
-            {game._id === "demo-game-id" && (
-              <Badge className="bg-yellow-500 text-black">Demo Mode</Badge>
-            )}
+            <Badge className="bg-blue-500 text-white">Real Database</Badge>
           </div>
         </div>
 
@@ -945,7 +519,7 @@ const GamePlay = () => {
               <CardHeader>
                 <CardTitle className="text-foreground flex items-center gap-2">
                   <Wallet className="h-5 w-5" />
-                  Wallet Balance
+                  Wallet Balance (Real Data)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -954,7 +528,7 @@ const GamePlay = () => {
                     ₹{wallet?.depositBalance.toLocaleString() || 0}
                   </p>
                   <p className="text-muted-foreground text-sm">
-                    Available for betting
+                    Available for betting (From MongoDB)
                   </p>
                   <div className="flex gap-2 mt-2">
                     <Button
@@ -967,7 +541,9 @@ const GamePlay = () => {
                     <Button
                       size="sm"
                       onClick={async () => {
-                        console.log("🔄 Manually refreshing game data...");
+                        console.log(
+                          "🔄 Manually refreshing REAL data from MongoDB...",
+                        );
                         await fetchGameData();
                         await fetchWalletData();
                       }}
@@ -1024,7 +600,7 @@ const GamePlay = () => {
                 {/* Current Payout Rates Display */}
                 <div className="mt-4 p-3 bg-matka-gold/10 rounded-lg border border-matka-gold/30">
                   <p className="text-xs font-semibold text-matka-gold mb-2">
-                    Current Payout Rates:
+                    Real Payout Rates (From MongoDB):
                   </p>
                   <div className="grid grid-cols-3 gap-2 text-xs">
                     <div className="text-center">
@@ -1034,7 +610,7 @@ const GamePlay = () => {
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-yellow-400">��� Haruf</div>
+                      <div className="text-yellow-400">⚡ Haruf</div>
                       <div className="font-bold text-foreground">
                         {game.harufPayout}:1
                       </div>
@@ -1113,7 +689,7 @@ const GamePlay = () => {
               <CardHeader>
                 <CardTitle className="text-foreground flex items-center gap-2">
                   <Play className="h-5 w-5" />
-                  Place Your Bet
+                  Place Your Bet (Real Betting)
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -1264,148 +840,111 @@ const GamePlay = () => {
                           className="mt-2"
                         />
                       </div>
+                      <Button
+                        onClick={() => setShowBetModal(true)}
+                        disabled={!betData.betNumber}
+                        className="w-full bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
+                      >
+                        Place Crossing Bet
+                      </Button>
                     </div>
                   </TabsContent>
                 </Tabs>
-
-                {/* Bet Amount Input */}
-                <div className="mt-6 space-y-4">
-                  <div>
-                    <Label className="text-foreground">
-                      Bet Amount (₹{game.minBet} - ₹{game.maxBet})
-                    </Label>
-                    <Input
-                      type="number"
-                      placeholder="Enter amount"
-                      value={betData.betAmount}
-                      onChange={(e) =>
-                        setBetData((prev) => ({
-                          ...prev,
-                          betAmount: e.target.value,
-                        }))
-                      }
-                      min={game.minBet}
-                      max={game.maxBet}
-                      className="mt-2"
-                    />
-                  </div>
-
-                  {/* Potential Winning Display */}
-                  {betData.betAmount && (
-                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded">
-                      <div className="flex justify-between items-center">
-                        <span className="text-foreground">
-                          Potential Winning:
-                        </span>
-                        <span className="text-green-500 font-bold text-lg">
-                          ₹{calculatePotentialWinning().toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Place Bet Button */}
-                  <Button
-                    onClick={handlePlaceBet}
-                    disabled={
-                      game.currentStatus !== "open" ||
-                      !betData.betNumber ||
-                      !betData.betAmount ||
-                      placing
-                    }
-                    className="w-full bg-matka-gold text-matka-dark hover:bg-matka-gold-dark font-semibold py-3"
-                  >
-                    {placing ? (
-                      <>
-                        <div className="animate-spin w-4 h-4 border-2 border-matka-dark border-t-transparent rounded-full mr-2"></div>
-                        Placing Bet...
-                      </>
-                    ) : game.currentStatus !== "open" ? (
-                      `Betting ${game.currentStatus === "closed" ? "Closed" : "Not Open"}`
-                    ) : (
-                      "Place Bet"
-                    )}
-                  </Button>
-                </div>
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Bet Confirmation Modal */}
+        {/* Bet Modal */}
         <Dialog open={showBetModal} onOpenChange={setShowBetModal}>
-          <DialogContent className="sm:max-w-[400px] bg-card border-border">
+          <DialogContent className="bg-matka-dark border-border">
             <DialogHeader>
-              <DialogTitle className="text-foreground">
-                Confirm Your Bet
+              <DialogTitle className="text-matka-gold">
+                Confirm Your Bet (Real Money)
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <div className="text-center p-4 bg-muted/30 rounded">
-                <h3 className="text-lg font-bold text-foreground">
-                  {game.name}
-                </h3>
-                <p className="text-muted-foreground">
-                  {selectedBetType.toUpperCase()}
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Number:</span>
-                  <span className="text-foreground font-bold text-lg">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <Label className="text-muted-foreground">Bet Type</Label>
+                  <p className="text-foreground font-semibold capitalize">
+                    {selectedBetType}
+                  </p>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Number</Label>
+                  <p className="text-foreground font-semibold">
                     {betData.betNumber}
-                  </span>
+                  </p>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Bet Amount:</span>
-                  <span className="text-foreground font-bold">
-                    ₹{parseFloat(betData.betAmount || "0").toLocaleString()}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">
-                    Potential Winning:
-                  </span>
-                  <span className="text-green-500 font-bold">
-                    ₹{calculatePotentialWinning().toLocaleString()}
-                  </span>
+                <div>
+                  <Label className="text-muted-foreground">Payout Rate</Label>
+                  <p className="text-foreground font-semibold">
+                    {selectedBetType === "jodi"
+                      ? game.jodiPayout
+                      : selectedBetType === "haruf"
+                        ? game.harufPayout
+                        : game.crossingPayout}
+                    :1
+                  </p>
                 </div>
                 {selectedBetType === "haruf" && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Position:</span>
-                    <span className="text-foreground">
-                      {betData.harufPosition} digit
-                    </span>
+                  <div>
+                    <Label className="text-muted-foreground">Position</Label>
+                    <p className="text-foreground font-semibold capitalize">
+                      {betData.harufPosition} Digit
+                    </p>
                   </div>
                 )}
               </div>
+              <div>
+                <Label className="text-foreground">Bet Amount (₹)</Label>
+                <Input
+                  type="number"
+                  placeholder={`Min: ₹${game.minBet}, Max: ₹${game.maxBet}`}
+                  value={betData.betAmount}
+                  onChange={(e) =>
+                    setBetData((prev) => ({
+                      ...prev,
+                      betAmount: e.target.value,
+                    }))
+                  }
+                  className="mt-2"
+                />
+              </div>
+              {betData.betAmount && (
+                <div className="p-3 bg-matka-gold/10 rounded border border-matka-gold/30">
+                  <p className="text-sm text-muted-foreground">
+                    Potential Winning
+                  </p>
+                  <p className="text-xl font-bold text-matka-gold">
+                    ₹
+                    {(
+                      parseFloat(betData.betAmount || "0") *
+                      (selectedBetType === "jodi"
+                        ? game.jodiPayout
+                        : selectedBetType === "haruf"
+                          ? game.harufPayout
+                          : game.crossingPayout)
+                    ).toLocaleString()}
+                  </p>
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button
                 variant="outline"
                 onClick={() => setShowBetModal(false)}
-                disabled={placing}
                 className="border-border text-foreground"
               >
                 Cancel
               </Button>
               <Button
-                onClick={confirmBet}
-                disabled={placing}
+                onClick={handlePlaceBet}
+                disabled={placing || !betData.betAmount}
                 className="bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
               >
-                {placing ? (
-                  <>
-                    <div className="animate-spin w-4 h-4 border-2 border-matka-dark border-t-transparent rounded-full mr-2"></div>
-                    Placing...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Confirm Bet
-                  </>
-                )}
+                {placing ? "Placing..." : "Place Bet"}
               </Button>
             </DialogFooter>
           </DialogContent>
