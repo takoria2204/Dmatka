@@ -297,16 +297,41 @@ const GamePlay = () => {
 
   const fetchWalletData = async () => {
     try {
+      // Skip wallet fetch if we already have demo wallet data
+      if (wallet && wallet.depositBalance === 1000) {
+        console.log("💡 Already using demo wallet data, skipping fetch");
+        return;
+      }
+
+      // Check connectivity first
+      const hasConnectivity = await checkConnectivity();
+      if (!hasConnectivity) {
+        console.log("🔌 No connectivity for wallet, using demo data");
+        setWallet({
+          depositBalance: 1000,
+          winningBalance: 500,
+          totalDeposits: 2000,
+          totalWithdrawals: 500,
+        });
+        return;
+      }
+
       const token = localStorage.getItem("matka_token");
       if (!token) {
-        console.log("No auth token for wallet fetch");
+        console.log("No auth token for wallet fetch, using demo data");
+        setWallet({
+          depositBalance: 1000,
+          winningBalance: 500,
+          totalDeposits: 2000,
+          totalWithdrawals: 500,
+        });
         return;
       }
 
       console.log("🔄 Fetching wallet data...");
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
       const response = await fetch("/api/wallet/balance", {
         headers: {
