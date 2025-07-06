@@ -148,6 +148,7 @@ const AdminDashboard = () => {
   const sidebarItems = [
     { name: "Dashboard", icon: FileText, active: true },
     { name: "Game Management", icon: Settings },
+    { name: "Payout Management", icon: TrendingUp },
     { name: "Betting", icon: Trophy },
     { name: "Users", icon: Users },
     { name: "Transactions", icon: CreditCard },
