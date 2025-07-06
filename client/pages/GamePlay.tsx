@@ -35,6 +35,7 @@ import {
   Zap,
   CheckCircle,
   XCircle,
+  RefreshCw,
 } from "lucide-react";
 
 interface Game {
