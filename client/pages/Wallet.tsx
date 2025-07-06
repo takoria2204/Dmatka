@@ -297,7 +297,7 @@ const Wallet = () => {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="stats" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 bg-muted/20">
+              <TabsList className="grid w-full grid-cols-3 bg-muted/20">
                 <TabsTrigger
                   value="stats"
                   className="data-[state=active]:bg-matka-gold data-[state=active]:text-matka-dark"
@@ -305,10 +305,16 @@ const Wallet = () => {
                   Statistics
                 </TabsTrigger>
                 <TabsTrigger
-                  value="history"
+                  value="deposits"
                   className="data-[state=active]:bg-matka-gold data-[state=active]:text-matka-dark"
                 >
-                  Deposit History
+                  Deposits
+                </TabsTrigger>
+                <TabsTrigger
+                  value="withdrawals"
+                  className="data-[state=active]:bg-matka-gold data-[state=active]:text-matka-dark"
+                >
+                  Withdrawals
                 </TabsTrigger>
               </TabsList>
 
