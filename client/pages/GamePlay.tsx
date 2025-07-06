@@ -138,9 +138,6 @@ const GamePlay = () => {
 
   const fetchGameData = async () => {
     try {
-      // First update payout rates to ensure we have correct values
-      await updatePayoutRates();
-
       const response = await fetch(`/api/games/${gameId}`, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("matka_token")}`,
