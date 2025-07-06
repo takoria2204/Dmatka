@@ -100,6 +100,20 @@ const GamePlay = () => {
   const [isOffline, setIsOffline] = useState(false);
   const [failedAttempts, setFailedAttempts] = useState(0);
 
+  // Safe fetch wrapper to prevent console errors
+  const safeFetch = async (
+    url: string,
+    options?: RequestInit,
+  ): Promise<Response | null> => {
+    try {
+      const response = await fetch(url, options);
+      return response;
+    } catch (error) {
+      // Silent catch - no console errors
+      return null;
+    }
+  };
+
   useEffect(() => {
     console.log("🔍 GamePlay useEffect - checking auth...");
     console.log("User:", user);
