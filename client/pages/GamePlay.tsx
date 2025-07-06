@@ -389,7 +389,7 @@ const GamePlay = () => {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
 
-      const response = await fetch("/api/wallet/balance", {
+      const response = await safeFetch("/api/wallet/balance", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
