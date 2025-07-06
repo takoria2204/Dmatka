@@ -362,36 +362,25 @@ const GamePlay = () => {
             "The requested game could not be found. Redirecting to games list.",
         });
         navigate("/games");
-      } else if (response) {
-        console.error("Failed to fetch game data:", response.status);
+      } else {
+        console.error(
+          "Failed to fetch game data:",
+          response?.status || "No response",
+        );
         toast({
           variant: "destructive",
           title: "Server Error",
-          description: `Failed to load game data (Error ${response.status}). Please try again.`,
+          description: "Failed to load game data. Please refresh the page.",
         });
-        // Server error, activate demo mode
-        activateDemoMode();
-      } else {
-        // No response (fetch failed), activate demo mode
-        console.log("🔌 No response received, activating demo mode");
-        activateDemoMode();
       }
     } catch (error: any) {
       console.error("Error fetching game:", error);
-
-      if (error.name === "AbortError") {
-        console.log("Game fetch timed out, activating demo mode");
-        activateDemoMode();
-      } else if (error.message.includes("Failed to fetch")) {
-        console.log("Network error, activating demo mode");
-        activateDemoMode();
-      } else {
-        // Other errors, activate demo mode instead of redirecting
-        console.log("Unknown error, activating demo mode:", error);
-        activateDemoMode();
-      }
-
-      // Don't set game to null, let fallback data handle it
+      toast({
+        variant: "destructive",
+        title: "Connection Error",
+        description:
+          "Unable to connect to server. Please check your internet connection and refresh.",
+      });
     } finally {
       setLoading(false);
     }
