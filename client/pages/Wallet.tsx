@@ -78,18 +78,25 @@ const Wallet = () => {
       }
 
       setLoading(true);
-      const [walletResponse, depositResponse, statsResponse] =
-        await Promise.all([
-          fetch("/api/wallet/balance", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch("/api/wallet/deposit-history?limit=10", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch("/api/wallet/stats", {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-        ]);
+      const [
+        walletResponse,
+        depositResponse,
+        withdrawalResponse,
+        statsResponse,
+      ] = await Promise.all([
+        fetch("/api/wallet/balance", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch("/api/wallet/deposit-history?limit=10", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch("/api/wallet/transactions?type=withdrawal&limit=10", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+        fetch("/api/wallet/stats", {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
 
       if (walletResponse.ok) {
         const walletData = await walletResponse.json();
