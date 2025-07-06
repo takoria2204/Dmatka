@@ -38,6 +38,7 @@ import GamePlay from "./pages/GamePlay";
 import MyBets from "./pages/MyBets";
 import AdminGameResults from "./pages/AdminGameResults";
 import AdminGameManagement from "./pages/AdminGameManagement";
+import AdminPayoutManagement from "./pages/AdminPayoutManagement";
 import AdminManagement from "./pages/AdminManagement";
 import AdminSettings from "./pages/AdminSettings";
 import AdminReports from "./pages/AdminReports";
