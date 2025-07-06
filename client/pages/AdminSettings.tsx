@@ -606,13 +606,14 @@ const AdminSettings = () => {
                     </Label>
                     <Input
                       type="number"
-                      value={settings.sessionTimeout}
-                      onChange={(e) =>
+                      value={settings.sessionTimeout || ""}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
                         updateSetting(
                           "sessionTimeout",
-                          parseInt(e.target.value),
-                        )
-                      }
+                          isNaN(value) ? 0 : value,
+                        );
+                      }}
                       className="bg-[#1a1a1a] border-gray-600 text-white"
                     />
                   </div>
@@ -621,13 +622,14 @@ const AdminSettings = () => {
                     <Label className="text-gray-300">Max Login Attempts</Label>
                     <Input
                       type="number"
-                      value={settings.maxLoginAttempts}
-                      onChange={(e) =>
+                      value={settings.maxLoginAttempts || ""}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
                         updateSetting(
                           "maxLoginAttempts",
-                          parseInt(e.target.value),
-                        )
-                      }
+                          isNaN(value) ? 0 : value,
+                        );
+                      }}
                       className="bg-[#1a1a1a] border-gray-600 text-white"
                     />
                   </div>
@@ -639,13 +641,14 @@ const AdminSettings = () => {
                   </Label>
                   <Input
                     type="number"
-                    value={settings.passwordMinLength}
-                    onChange={(e) =>
+                    value={settings.passwordMinLength || ""}
+                    onChange={(e) => {
+                      const value = parseInt(e.target.value);
                       updateSetting(
                         "passwordMinLength",
-                        parseInt(e.target.value),
-                      )
-                    }
+                        isNaN(value) ? 0 : value,
+                      );
+                    }}
                     className="bg-[#1a1a1a] border-gray-600 text-white"
                   />
                 </div>
