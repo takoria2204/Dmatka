@@ -133,25 +133,31 @@ const GamePlay = () => {
   };
 
   useEffect(() => {
-    const initializeGame = async () => {
-      console.log(
-        "🔍 GamePlay useEffect - activating demo mode to prevent fetch errors",
-      );
+    console.log(
+      "🔍 GamePlay useEffect - checking auth and fetching real data...",
+    );
+    console.log("User:", user);
+    console.log("GameId:", gameId);
 
-      if (!gameId) {
-        console.log("❌ No gameId found, redirecting to games");
-        navigate("/games");
-        return;
-      }
+    const token = localStorage.getItem("matka_token");
+    console.log("Token:", token ? "Present" : "Missing");
 
-      // Always activate demo mode to prevent network errors
-      console.log("🎮 Activating demo mode for stable experience");
-      await activateDemoMode();
-      setLoading(false);
-    };
+    if (!gameId) {
+      console.log("❌ No gameId found, redirecting to games");
+      navigate("/games");
+      return;
+    }
 
-    initializeGame();
-  }, [gameId, navigate]);
+    if (!user && !token) {
+      console.log("❌ No user or token, redirecting to login");
+      navigate("/login");
+      return;
+    }
+
+    console.log("✅ Auth check passed, fetching real data from MongoDB...");
+    fetchGameData();
+    fetchWalletData();
+  }, [user, gameId, navigate]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -437,7 +443,7 @@ const GamePlay = () => {
         return;
       }
 
-      console.log("🔄 Fetching wallet data...");
+      console.log("���� Fetching wallet data...");
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
