@@ -711,13 +711,14 @@ const AdminSettings = () => {
                     </Label>
                     <Input
                       type="number"
-                      value={settings.minimumWithdrawal}
-                      onChange={(e) =>
+                      value={settings.minimumWithdrawal || ""}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
                         updateSetting(
                           "minimumWithdrawal",
-                          parseInt(e.target.value),
-                        )
-                      }
+                          isNaN(value) ? 0 : value,
+                        );
+                      }}
                       className="bg-[#1a1a1a] border-gray-600 text-white"
                     />
                   </div>
@@ -728,13 +729,14 @@ const AdminSettings = () => {
                     </Label>
                     <Input
                       type="number"
-                      value={settings.maximumWithdrawal}
-                      onChange={(e) =>
+                      value={settings.maximumWithdrawal || ""}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
                         updateSetting(
                           "maximumWithdrawal",
-                          parseInt(e.target.value),
-                        )
-                      }
+                          isNaN(value) ? 0 : value,
+                        );
+                      }}
                       className="bg-[#1a1a1a] border-gray-600 text-white"
                     />
                   </div>
@@ -747,13 +749,14 @@ const AdminSettings = () => {
                     </Label>
                     <Input
                       type="number"
-                      value={settings.withdrawalProcessingTime}
-                      onChange={(e) =>
+                      value={settings.withdrawalProcessingTime || ""}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
                         updateSetting(
                           "withdrawalProcessingTime",
-                          parseInt(e.target.value),
-                        )
-                      }
+                          isNaN(value) ? 0 : value,
+                        );
+                      }}
                       className="bg-[#1a1a1a] border-gray-600 text-white"
                     />
                   </div>
@@ -762,13 +765,14 @@ const AdminSettings = () => {
                     <Label className="text-gray-300">Transaction Fee (%)</Label>
                     <Input
                       type="number"
-                      value={settings.transactionFee}
-                      onChange={(e) =>
+                      value={settings.transactionFee || ""}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
                         updateSetting(
                           "transactionFee",
-                          parseFloat(e.target.value),
-                        )
-                      }
+                          isNaN(value) ? 0 : value,
+                        );
+                      }}
                       className="bg-[#1a1a1a] border-gray-600 text-white"
                     />
                   </div>
