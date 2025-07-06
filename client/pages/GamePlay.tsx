@@ -278,44 +278,15 @@ const GamePlay = () => {
       console.error("Error fetching game:", error);
 
       if (error.name === "AbortError") {
-        console.log("Game fetch timed out");
-        toast({
-          variant: "destructive",
-          title: "Connection Timeout",
-          description:
-            "Failed to load game data. Please check your connection and try again.",
-        });
+        console.log("Game fetch timed out, activating demo mode");
+        activateDemoMode();
       } else if (error.message.includes("Failed to fetch")) {
-        console.log("Network error - server may be down");
-        toast({
-          variant: "destructive",
-          title: "Connection Failed",
-          description: "Working in offline mode with demo data.",
-        });
-
-        // Set fallback demo game data for testing
-        setGame({
-          _id: "demo-game-id",
-          name:
-            gameId
-              ?.replace(/-/g, " ")
-              .replace(/\b\w/g, (l) => l.toUpperCase()) || "Demo Game",
-          type: "jodi",
-          description: "Demo game for offline testing",
-          startTime: "10:00",
-          endTime: "17:30",
-          resultTime: "18:00",
-          minBet: 10,
-          maxBet: 5000,
-          jodiPayout: 95,
-          harufPayout: 9,
-          crossingPayout: 95,
-          currentStatus: "open",
-          isActive: true,
-        });
+        console.log("Network error, activating demo mode");
+        activateDemoMode();
       } else {
-        // Other errors, redirect to games
-        navigate("/games");
+        // Other errors, activate demo mode instead of redirecting
+        console.log("Unknown error, activating demo mode:", error);
+        activateDemoMode();
       }
 
       // Don't set game to null, let fallback data handle it
