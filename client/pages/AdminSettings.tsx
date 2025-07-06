@@ -500,10 +500,11 @@ const AdminSettings = () => {
                       <Label className="text-gray-300">Jodi Payout (x:1)</Label>
                       <Input
                         type="number"
-                        value={settings.jodiPayout}
-                        onChange={(e) =>
-                          updateSetting("jodiPayout", parseInt(e.target.value))
-                        }
+                        value={settings.jodiPayout || ""}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          updateSetting("jodiPayout", isNaN(value) ? 0 : value);
+                        }}
                         className="bg-[#1a1a1a] border-gray-600 text-white"
                       />
                     </div>
@@ -514,10 +515,14 @@ const AdminSettings = () => {
                       </Label>
                       <Input
                         type="number"
-                        value={settings.harufPayout}
-                        onChange={(e) =>
-                          updateSetting("harufPayout", parseInt(e.target.value))
-                        }
+                        value={settings.harufPayout || ""}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
+                          updateSetting(
+                            "harufPayout",
+                            isNaN(value) ? 0 : value,
+                          );
+                        }}
                         className="bg-[#1a1a1a] border-gray-600 text-white"
                       />
                     </div>
@@ -528,13 +533,14 @@ const AdminSettings = () => {
                       </Label>
                       <Input
                         type="number"
-                        value={settings.crossingPayout}
-                        onChange={(e) =>
+                        value={settings.crossingPayout || ""}
+                        onChange={(e) => {
+                          const value = parseInt(e.target.value);
                           updateSetting(
                             "crossingPayout",
-                            parseInt(e.target.value),
-                          )
-                        }
+                            isNaN(value) ? 0 : value,
+                          );
+                        }}
                         className="bg-[#1a1a1a] border-gray-600 text-white"
                       />
                     </div>
