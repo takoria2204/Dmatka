@@ -106,10 +106,28 @@ const GamePlay = () => {
     options?: RequestInit,
   ): Promise<Response | null> => {
     try {
-      const response = await fetch(url, options);
+      // Add AbortController timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeoutId);
       return response;
-    } catch (error) {
-      // Silent catch - no console errors
+    } catch (error: any) {
+      // Completely silence all fetch errors including network failures
+      if (error.name === "AbortError") {
+        // Request was aborted due to timeout
+        return null;
+      }
+      if (error.message?.includes("Failed to fetch")) {
+        // Network connectivity issue
+        return null;
+      }
+      // All other errors
       return null;
     }
   };
@@ -1019,7 +1037,7 @@ const GamePlay = () => {
                       </div>
                     </div>
                     <div className="text-center">
-                      <div className="text-yellow-400">⚡ Haruf</div>
+                      <div className="text-yellow-400">��� Haruf</div>
                       <div className="font-bold text-foreground">
                         {game.harufPayout}:1
                       </div>
