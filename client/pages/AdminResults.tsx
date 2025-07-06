@@ -315,7 +315,9 @@ const AdminResults = () => {
 
   // Calculate real-time statistics
   const pendingGames = games.filter(
-    (game) => game.currentStatus === "open" || game.currentStatus === "closed",
+    (game) =>
+      game.needsResult ||
+      (game.todayBets && game.todayBets > 0 && !game.hasResult),
   );
 
   const declaredResults = results.filter(
