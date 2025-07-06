@@ -316,6 +316,14 @@ const AppRoutes = () => (
       }
     />
     <Route
+      path="/admin/payout-management"
+      element={
+        <AdminProtectedRoute>
+          <AdminPayoutManagement />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
       path="/admin/management"
       element={
         <AdminProtectedRoute>
