@@ -617,14 +617,38 @@ const GamePlay = () => {
     );
   }
 
-  if (!game) {
+  if (!game && !loading) {
     return (
       <div className="min-h-screen bg-matka-dark flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-foreground mb-4">
-            Game Not Found
+            Unable to Load Game
           </h1>
-          <Button onClick={() => navigate("/games")}>Back to Games</Button>
+          <p className="text-muted-foreground mb-6">
+            There seems to be a connection issue. Please check your internet
+            connection and try again.
+          </p>
+          <div className="flex gap-2 justify-center">
+            <Button
+              onClick={() => {
+                setLoading(true);
+                fetchGameData();
+                fetchWalletData();
+              }}
+              className="bg-matka-gold text-matka-dark hover:bg-matka-gold-dark"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Try Again
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/games")}
+              className="border-border text-foreground hover:bg-muted"
+            >
+              Back to Games
+            </Button>
+          </div>
         </div>
       </div>
     );
