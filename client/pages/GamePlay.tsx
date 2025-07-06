@@ -291,12 +291,26 @@ const GamePlay = () => {
       if (response && response.ok) {
         const data = await response.json();
         console.log("✅ Game data received:", data.data);
-        console.log("🎯 Payout rates:", {
+        console.log("🎯 Current payout rates from server:", {
           jodi: data.data.jodiPayout,
           haruf: data.data.harufPayout,
           crossing: data.data.crossingPayout,
         });
-        setGame(data.data);
+
+        // Ensure we're using the server data and not falling back to demo
+        setGame({
+          ...data.data,
+          // Force these from server response to avoid any cache issues
+          jodiPayout: data.data.jodiPayout || 95,
+          harufPayout: data.data.harufPayout || 9,
+          crossingPayout: data.data.crossingPayout || 95,
+        });
+
+        console.log("🎮 Game state set with payout rates:", {
+          jodi: data.data.jodiPayout || 95,
+          haruf: data.data.harufPayout || 9,
+          crossing: data.data.crossingPayout || 95,
+        });
       } else if (response && response.status === 401) {
         console.log("Authentication failed, redirecting to login");
         localStorage.removeItem("matka_token");
