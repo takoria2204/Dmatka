@@ -133,20 +133,24 @@ const GamePlay = () => {
   };
 
   useEffect(() => {
-    console.log(
-      "🔍 GamePlay useEffect - activating demo mode to prevent fetch errors",
-    );
+    const initializeGame = async () => {
+      console.log(
+        "🔍 GamePlay useEffect - activating demo mode to prevent fetch errors",
+      );
 
-    if (!gameId) {
-      console.log("❌ No gameId found, redirecting to games");
-      navigate("/games");
-      return;
-    }
+      if (!gameId) {
+        console.log("❌ No gameId found, redirecting to games");
+        navigate("/games");
+        return;
+      }
 
-    // Always activate demo mode to prevent network errors
-    console.log("🎮 Activating demo mode for stable experience");
-    activateDemoMode();
-    setLoading(false);
+      // Always activate demo mode to prevent network errors
+      console.log("🎮 Activating demo mode for stable experience");
+      await activateDemoMode();
+      setLoading(false);
+    };
+
+    initializeGame();
   }, [gameId, navigate]);
 
   useEffect(() => {
