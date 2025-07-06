@@ -386,7 +386,12 @@ const AdminResults = () => {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={handleRefresh}
+              onClick={async () => {
+                setRefreshing(true);
+                await updatePayoutRates();
+                await fetchData();
+                setRefreshing(false);
+              }}
               disabled={refreshing}
               className="bg-green-500 text-white hover:bg-green-600"
             >
@@ -394,6 +399,22 @@ const AdminResults = () => {
                 className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
               />
               Refresh
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  await updatePayoutRates();
+                  alert(
+                    "✅ Payout rates updated!\n\nJodi: 95:1\nHaruf: 9:1\nCrossing: 95:1",
+                  );
+                } catch (error) {
+                  alert("❌ Failed to update payout rates");
+                }
+              }}
+              className="bg-blue-500 text-white hover:bg-blue-600"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Update Payouts
             </Button>
             <Button
               onClick={() => {
