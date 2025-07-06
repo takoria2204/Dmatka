@@ -96,6 +96,10 @@ const GamePlay = () => {
     crossing: ["12-34", "56-78"],
   });
 
+  // Circuit breaker to prevent repeated failed attempts
+  const [isOffline, setIsOffline] = useState(false);
+  const [failedAttempts, setFailedAttempts] = useState(0);
+
   useEffect(() => {
     console.log("🔍 GamePlay useEffect - checking auth...");
     console.log("User:", user);
