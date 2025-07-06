@@ -398,11 +398,11 @@ const GamePlay = () => {
 
       clearTimeout(timeoutId);
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json();
         console.log("✅ Wallet data received:", data.data);
         setWallet(data.data);
-      } else if (response.status === 401) {
+      } else if (response && response.status === 401) {
         console.log("Wallet auth failed");
         localStorage.removeItem("matka_token");
         localStorage.removeItem("matka_user");
