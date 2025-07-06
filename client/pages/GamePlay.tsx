@@ -232,12 +232,23 @@ const GamePlay = () => {
 
       console.log("🔄 Fetching REAL wallet data from MongoDB Atlas...");
 
+      // Use a wrapped fetch to handle network errors gracefully
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
       const response = await fetch("/api/wallet/balance", {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
+        signal: controller.signal,
+      }).catch((error) => {
+        // Silently handle fetch errors
+        console.log("🔌 Wallet fetch connectivity issue");
+        return null;
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
