@@ -511,11 +511,15 @@ const AdminResults = () => {
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="text-gray-400">
-                                    Winning Number
+                                  <p className="text-gray-400">Today's Bets</p>
+                                  <p className="text-blue-400 font-bold text-lg">
+                                    {game.todayBets || 0} bets
                                   </p>
-                                  <p className="text-yellow-400 font-bold text-lg">
-                                    -
+                                  <p className="text-gray-300 text-sm">
+                                    ₹
+                                    {(
+                                      game.todayBetAmount || 0
+                                    ).toLocaleString()}
                                   </p>
                                 </div>
                                 <div>
@@ -523,12 +527,24 @@ const AdminResults = () => {
                                   <p className="text-white capitalize">
                                     {game.currentStatus}
                                   </p>
+                                  <p className="text-gray-300 text-sm">
+                                    {game.needsResult
+                                      ? "Needs Result"
+                                      : "Ready"}
+                                  </p>
                                 </div>
                                 <div>
                                   <p className="text-gray-400">Result Time</p>
                                   <p className="text-white">
                                     {game.resultTime}
                                   </p>
+                                  {game.todayBets &&
+                                    game.todayBets > 0 &&
+                                    !game.hasResult && (
+                                      <p className="text-red-400 text-sm font-semibold">
+                                        ⚠️ Result Pending
+                                      </p>
+                                    )}
                                 </div>
                               </div>
                             </div>
