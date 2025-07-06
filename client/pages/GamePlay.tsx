@@ -604,10 +604,7 @@ const GamePlay = () => {
                     <Button
                       size="sm"
                       onClick={async () => {
-                        console.log(
-                          "🔄 Manually refreshing game data and payout rates...",
-                        );
-                        await updatePayoutRates();
+                        console.log("🔄 Manually refreshing game data...");
                         await fetchGameData();
                         await fetchWalletData();
                       }}
