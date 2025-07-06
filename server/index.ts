@@ -143,6 +143,39 @@ export function createServer() {
   app.put("/api/admin/games/:gameId/force-status", adminAuth, forceGameStatus);
   app.get("/api/admin/games/:gameId/analytics", adminAuth, getGameAnalytics);
   app.get("/api/admin/game-results", adminAuth, getGameResults);
+  app.post("/api/admin/games/update-payouts", adminAuth, async (req, res) => {
+    try {
+      const Game = require("./models/Game").default;
+
+      // Update all games with new payout rates
+      const result = await Game.updateMany(
+        {}, // Update all games
+        {
+          $set: {
+            jodiPayout: 95, // Jodi: 95:1
+            harufPayout: 9, // Haruf: 9:1
+            crossingPayout: 95, // Crossing: 95:1
+          },
+        },
+      );
+
+      console.log("✅ Updated payout rates for", result.modifiedCount, "games");
+
+      res.json({
+        success: true,
+        message: `Updated ${result.modifiedCount} games with new payout rates`,
+        data: {
+          jodiPayout: 95,
+          harufPayout: 9,
+          crossingPayout: 95,
+          updatedCount: result.modifiedCount,
+        },
+      });
+    } catch (error) {
+      console.error("❌ Error updating payouts:", error);
+      res.status(500).json({ message: "Failed to update payouts" });
+    }
+  });
 
   // Admin Management API endpoints (basic implementation)
   app.get("/api/admin/management/admins", adminAuth, (req, res) => {
