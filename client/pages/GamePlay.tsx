@@ -211,22 +211,60 @@ const GamePlay = () => {
 
   const fetchWalletData = async () => {
     try {
-      console.log("Fetching wallet data...");
+      const token = localStorage.getItem("matka_token");
+      if (!token) {
+        console.log("No auth token for wallet fetch");
+        return;
+      }
+
+      console.log("🔄 Fetching wallet data...");
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+
       const response = await fetch("/api/wallet/balance", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("matka_token")}`,
+          Authorization: `Bearer ${token}`,
         },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Wallet data received:", data.data);
+        console.log("✅ Wallet data received:", data.data);
         setWallet(data.data);
+      } else if (response.status === 401) {
+        console.log("Wallet auth failed");
+        localStorage.removeItem("matka_token");
+        navigate("/login");
       } else {
         console.error("Failed to fetch wallet data:", response.status);
+        // Set default wallet state to prevent crashes
+        setWallet({
+          depositBalance: 0,
+          winningBalance: 0,
+          totalDeposits: 0,
+          totalWithdrawals: 0,
+        });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching wallet:", error);
+
+      if (error.name === "AbortError") {
+        console.log("Wallet fetch timed out");
+      } else if (error.message.includes("Failed to fetch")) {
+        console.log("Network error fetching wallet - using defaults");
+      }
+
+      // Set default wallet state to prevent crashes
+      setWallet({
+        depositBalance: 0,
+        winningBalance: 0,
+        totalDeposits: 0,
+        totalWithdrawals: 0,
+      });
     }
   };
 
