@@ -606,10 +606,13 @@ const GamePlay = () => {
                     </Button>
                     <Button
                       size="sm"
-                      onClick={() => {
-                        console.log("🔄 Manually refreshing game data...");
-                        fetchGameData();
-                        fetchWalletData();
+                      onClick={async () => {
+                        console.log(
+                          "🔄 Manually refreshing game data and payout rates...",
+                        );
+                        await updatePayoutRates();
+                        await fetchGameData();
+                        await fetchWalletData();
                       }}
                       variant="outline"
                       className="border-matka-gold text-matka-gold hover:bg-matka-gold/10"
