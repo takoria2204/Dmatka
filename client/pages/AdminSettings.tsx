@@ -459,10 +459,14 @@ const AdminSettings = () => {
                     </Label>
                     <Input
                       type="number"
-                      value={settings.defaultMinBet}
-                      onChange={(e) =>
-                        updateSetting("defaultMinBet", parseInt(e.target.value))
-                      }
+                      value={settings.defaultMinBet || ""}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        updateSetting(
+                          "defaultMinBet",
+                          isNaN(value) ? 0 : value,
+                        );
+                      }}
                       className="bg-[#1a1a1a] border-gray-600 text-white"
                     />
                   </div>
@@ -473,10 +477,14 @@ const AdminSettings = () => {
                     </Label>
                     <Input
                       type="number"
-                      value={settings.defaultMaxBet}
-                      onChange={(e) =>
-                        updateSetting("defaultMaxBet", parseInt(e.target.value))
-                      }
+                      value={settings.defaultMaxBet || ""}
+                      onChange={(e) => {
+                        const value = parseInt(e.target.value);
+                        updateSetting(
+                          "defaultMaxBet",
+                          isNaN(value) ? 0 : value,
+                        );
+                      }}
                       className="bg-[#1a1a1a] border-gray-600 text-white"
                     />
                   </div>
