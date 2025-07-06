@@ -323,7 +323,7 @@ Thank you for your patience!`);
                 htmlFor="accountNumber"
                 className="text-foreground text-lg mb-2 block"
               >
-                Bank Account Number *
+                Bank Account Number * (8-18 digits)
               </Label>
               <Input
                 id="accountNumber"
@@ -333,8 +333,23 @@ Thank you for your patience!`);
                 value={formData.accountNumber}
                 onChange={handleChange}
                 className="bg-muted border-border text-foreground"
+                maxLength={18}
                 required
               />
+              {formData.accountNumber && (
+                <div className="mt-1">
+                  {formData.accountNumber.length < 8 ||
+                  formData.accountNumber.length > 18 ? (
+                    <p className="text-red-500 text-sm">
+                      Account number must be 8-18 digits
+                    </p>
+                  ) : (
+                    <p className="text-green-500 text-sm">
+                      ✓ Valid account number
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
 
             <div>
@@ -342,19 +357,38 @@ Thank you for your patience!`);
                 htmlFor="ifscCode"
                 className="text-foreground text-lg mb-2 block"
               >
-                IFSC Code *
+                IFSC Code * (11 characters)
               </Label>
               <Input
                 id="ifscCode"
                 name="ifscCode"
                 type="text"
-                placeholder="Enter IFSC code"
+                placeholder="Enter IFSC code (e.g. HDFC0000123)"
                 value={formData.ifscCode}
-                onChange={handleChange}
+                onChange={(e) => {
+                  const value = e.target.value
+                    .toUpperCase()
+                    .replace(/[^A-Z0-9]/g, "");
+                  setFormData({
+                    ...formData,
+                    ifscCode: value,
+                  });
+                }}
                 className="bg-muted border-border text-foreground"
-                style={{ textTransform: "uppercase" }}
+                maxLength={11}
                 required
               />
+              {formData.ifscCode && (
+                <div className="mt-1">
+                  {formData.ifscCode.length !== 11 ? (
+                    <p className="text-red-500 text-sm">
+                      IFSC code must be exactly 11 characters
+                    </p>
+                  ) : (
+                    <p className="text-green-500 text-sm">✓ Valid IFSC code</p>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
