@@ -169,6 +169,9 @@ const AdminDashboard = () => {
       case "Game Management":
         navigate("/admin/game-management");
         break;
+      case "Payout Management":
+        navigate("/admin/payout-management");
+        break;
       case "Betting":
         navigate("/admin/bets");
         break;
