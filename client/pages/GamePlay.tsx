@@ -265,15 +265,18 @@ const GamePlay = () => {
 
       clearTimeout(timeoutId);
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json();
         console.log("✅ REAL Wallet data from MongoDB:", data.data);
         setWallet(data.data);
+      } else if (!response) {
+        console.log("🔌 Wallet fetch - server connectivity issue");
       } else {
-        console.error("Failed to fetch wallet data:", response.status);
+        console.log("⚠️ Wallet fetch failed:", response.status);
       }
     } catch (error) {
-      console.error("Error fetching wallet data:", error);
+      // Silently handle wallet fetch errors
+      console.log("🔌 Wallet fetch error handled gracefully");
     }
   };
 
