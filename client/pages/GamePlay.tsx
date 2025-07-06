@@ -125,7 +125,7 @@ const GamePlay = () => {
 
     // Check for authentication but don't immediately activate demo mode
     if (!token) {
-      console.log("⚠️ No auth token found, will try to fetch anyway");
+      console.log("⚠�� No auth token found, will try to fetch anyway");
       // Don't immediately activate demo mode - let the fetch attempt happen first
     }
 
@@ -272,12 +272,15 @@ const GamePlay = () => {
 
       const token = localStorage.getItem("matka_token");
       if (!token) {
-        console.log("No auth token found, activating demo mode");
+        console.log(
+          "❌ No auth token found in fetchGameData, activating demo mode",
+        );
         activateDemoMode();
         return;
       }
 
       console.log("🔄 Fetching game data for gameId:", gameId);
+      console.log("🔑 Using token:", token.substring(0, 20) + "...");
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
