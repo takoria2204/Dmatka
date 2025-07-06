@@ -434,6 +434,40 @@ const AdminResults = () => {
           </div>
         </div>
 
+        {/* Today's Betting Summary */}
+        <Card className="bg-blue-600 border-blue-500 mb-6">
+          <CardContent className="p-4">
+            <div className="text-center text-white">
+              <h2 className="text-lg font-bold mb-2">
+                📅 Today's Betting Summary
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <p className="text-2xl font-bold">
+                    {games.filter((g) => g.todayBets && g.todayBets > 0).length}
+                  </p>
+                  <p className="text-sm">Games with Bets</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    {games.filter((g) => g.needsResult).length}
+                  </p>
+                  <p className="text-sm">Need Results</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">
+                    ₹
+                    {games
+                      .reduce((sum, g) => sum + (g.todayBetAmount || 0), 0)
+                      .toLocaleString()}
+                  </p>
+                  <p className="text-sm">Total Bet Amount</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Statistics Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <Card className="bg-[#2a2a2a] border-gray-700">
