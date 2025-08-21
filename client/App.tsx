@@ -15,7 +15,6 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Dashboard from "./pages/Dashboard";
 import MatkaGames from "./pages/MatkaGames";
 import GamesHub from "./pages/GamesHub";
-import GameInterface from "./pages/GameInterface";
 import Charts from "./pages/Charts";
 import Wallet from "./pages/Wallet";
 import AddMoney from "./pages/AddMoney";
@@ -33,6 +32,18 @@ import AdminPaymentRequests from "./pages/AdminPaymentRequests";
 import AdminResults from "./pages/AdminResults";
 import AdminSupportTickets from "./pages/AdminSupportTickets";
 import Support from "./pages/Support";
+import BettingHistory from "./pages/BettingHistory";
+import Games from "./pages/Games";
+import GamePlay from "./pages/GamePlay";
+import MyBets from "./pages/MyBets";
+import AdminGameResults from "./pages/AdminGameResults";
+import AdminGameManagement from "./pages/AdminGameManagement";
+import AdminPayoutManagement from "./pages/AdminPayoutManagement";
+import AdminManagement from "./pages/AdminManagement";
+import AdminSettings from "./pages/AdminSettings";
+import AdminReports from "./pages/AdminReports";
+import AdminTesting from "./pages/AdminTesting";
+import TestResultDeclaration from "./pages/TestResultDeclaration";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -134,14 +145,7 @@ const AppRoutes = () => (
         </ProtectedRoute>
       }
     />
-    <Route
-      path="/game/:gameName"
-      element={
-        <ProtectedRoute>
-          <GameInterface />
-        </ProtectedRoute>
-      }
-    />
+
     <Route
       path="/charts"
       element={
@@ -187,6 +191,38 @@ const AppRoutes = () => (
       element={
         <ProtectedRoute>
           <Support />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/betting-history"
+      element={
+        <ProtectedRoute>
+          <BettingHistory />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/games"
+      element={
+        <ProtectedRoute>
+          <Games />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/game/:gameId"
+      element={
+        <ProtectedRoute>
+          <GamePlay />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/my-bets"
+      element={
+        <ProtectedRoute>
+          <MyBets />
         </ProtectedRoute>
       }
     />
@@ -264,6 +300,62 @@ const AppRoutes = () => (
       }
     />
     <Route
+      path="/admin/game-results"
+      element={
+        <AdminProtectedRoute>
+          <AdminGameResults />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/game-management"
+      element={
+        <AdminProtectedRoute>
+          <AdminGameManagement />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/payout-management"
+      element={
+        <AdminProtectedRoute>
+          <AdminPayoutManagement />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/management"
+      element={
+        <AdminProtectedRoute>
+          <AdminManagement />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/settings"
+      element={
+        <AdminProtectedRoute>
+          <AdminSettings />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/reports"
+      element={
+        <AdminProtectedRoute>
+          <AdminReports />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/testing"
+      element={
+        <AdminProtectedRoute>
+          <AdminTesting />
+        </AdminProtectedRoute>
+      }
+    />
+    <Route
       path="/admin/support"
       element={
         <AdminProtectedRoute>
@@ -271,6 +363,7 @@ const AppRoutes = () => (
         </AdminProtectedRoute>
       }
     />
+    <Route path="/test-result" element={<TestResultDeclaration />} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

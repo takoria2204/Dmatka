@@ -2,6 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -15,7 +23,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -24,8 +32,11 @@ import {
   CheckCircle,
   XCircle,
   Clock,
-  Eye,
   AlertTriangle,
+  RefreshCw,
+  User,
+  DollarSign,
+  Eye,
 } from "lucide-react";
 
 interface Transaction {
@@ -37,7 +48,7 @@ interface Transaction {
     email: string;
   };
   amount: number;
-  status: string;
+  status: "pending" | "completed" | "rejected";
   description: string;
   bankDetails?: {
     bankName: string;
@@ -51,6 +62,7 @@ interface Transaction {
   };
   processedAt?: string;
   createdAt: string;
+  balanceAfter: number;
 }
 
 const AdminWithdrawals = () => {
@@ -62,31 +74,76 @@ const AdminWithdrawals = () => {
   const [adminNotes, setAdminNotes] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [actionType, setActionType] = useState<"approve" | "reject">("approve");
+  const [statusFilter, setStatusFilter] = useState("pending");
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    approved: 0,
+    rejected: 0,
+    totalAmount: 0,
+  });
 
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem("admin_token");
+    const adminUser = localStorage.getItem("admin_user");
+
+    if (!token || !adminUser) {
+      navigate("/admin/login");
+      return;
+    }
+
     fetchWithdrawals();
-  }, []);
+  }, [navigate, statusFilter]);
 
   const fetchWithdrawals = async () => {
     try {
+      setLoading(true);
       const token = localStorage.getItem("admin_token");
-      const response = await fetch(
-        "/api/admin/transactions?type=withdrawal&status=pending",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const url =
+        statusFilter === "all"
+          ? "/api/admin/transactions?type=withdrawal&limit=50"
+          : `/api/admin/transactions?type=withdrawal&status=${statusFilter}&limit=50`;
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem("admin_token");
+          localStorage.removeItem("admin_user");
+          navigate("/admin/login");
+          return;
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
-
-      if (response.ok) {
+      if (data.success) {
         setWithdrawals(data.data.transactions);
-      } else {
-        console.error("Failed to fetch withdrawals:", data.message);
+
+        // Calculate stats
+        const allWithdrawals = data.data.transactions;
+        const stats = {
+          total: allWithdrawals.length,
+          pending: allWithdrawals.filter(
+            (w: Transaction) => w.status === "pending",
+          ).length,
+          approved: allWithdrawals.filter(
+            (w: Transaction) => w.status === "completed",
+          ).length,
+          rejected: allWithdrawals.filter(
+            (w: Transaction) => w.status === "rejected",
+          ).length,
+          totalAmount: allWithdrawals
+            .filter((w: Transaction) => w.status === "completed")
+            .reduce((sum: number, w: Transaction) => sum + w.amount, 0),
+        };
+        setStats(stats);
       }
     } catch (error) {
       console.error("Error fetching withdrawals:", error);
@@ -97,6 +154,11 @@ const AdminWithdrawals = () => {
 
   const handleProcessWithdrawal = async () => {
     if (!selectedWithdrawal) return;
+
+    if (actionType === "reject" && !adminNotes.trim()) {
+      alert("Please provide rejection reason");
+      return;
+    }
 
     setProcessing(true);
     try {
@@ -111,7 +173,7 @@ const AdminWithdrawals = () => {
           },
           body: JSON.stringify({
             action: actionType,
-            adminNotes,
+            adminNotes: adminNotes.trim(),
           }),
         },
       );
@@ -119,325 +181,421 @@ const AdminWithdrawals = () => {
       const data = await response.json();
 
       if (response.ok) {
-        alert(
-          `Withdrawal ${actionType === "approve" ? "approved" : "rejected"} successfully!`,
-        );
+        alert(data.message);
         setShowDialog(false);
+        setSelectedWithdrawal(null);
         setAdminNotes("");
-        fetchWithdrawals();
+        fetchWithdrawals(); // Refresh the list
       } else {
-        alert(`Failed to process withdrawal: ${data.message}`);
+        alert(data.message || `Failed to ${actionType} withdrawal`);
       }
     } catch (error) {
-      console.error("Error processing withdrawal:", error);
-      alert("Failed to process withdrawal");
+      console.error(`Error ${actionType}ing withdrawal:`, error);
+      alert(`Failed to ${actionType} withdrawal`);
     } finally {
       setProcessing(false);
     }
   };
 
-  const openProcessDialog = (
-    withdrawal: Transaction,
-    action: "approve" | "reject",
-  ) => {
+  const handleViewWithdrawal = (withdrawal: Transaction) => {
     setSelectedWithdrawal(withdrawal);
-    setActionType(action);
-    setAdminNotes("");
+    setAdminNotes(withdrawal.adminNotes || "");
+    setActionType("approve");
     setShowDialog(true);
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "completed":
+        return "bg-green-500";
+      case "pending":
+        return "bg-yellow-500";
+      case "rejected":
+        return "bg-red-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString("en-IN", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  if (loading && withdrawals.length === 0) {
+    return (
+      <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-matka-dark">
-      {/* Header */}
-      <header className="bg-card/90 backdrop-blur-sm border-b border-border/50">
-        <div className="container mx-auto px-4 py-4">
+    <div className="min-h-screen bg-[#1a1a1a]">
+      <div className="container mx-auto px-4 py-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <Button
-              onClick={() => navigate("/admin/dashboard")}
               variant="ghost"
               size="sm"
-              className="p-2 hover:bg-muted"
+              onClick={() => navigate("/admin/dashboard")}
+              className="text-gray-300 hover:text-white"
             >
-              <ArrowLeft className="h-5 w-5 text-foreground" />
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Dashboard
             </Button>
-            <h1 className="text-foreground text-xl font-bold">
+            <h1 className="text-2xl font-bold text-white">
               Withdrawal Management
             </h1>
           </div>
+          <Button
+            onClick={fetchWithdrawals}
+            className="bg-blue-500 text-white hover:bg-blue-600"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
-      </header>
 
-      <div className="container mx-auto px-4 py-6">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-          <Card className="bg-card/90 backdrop-blur-sm border-border/50">
-            <CardContent className="p-6 text-center">
-              <Clock className="h-8 w-8 text-orange-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-foreground">
-                {withdrawals.length}
-              </p>
-              <p className="text-muted-foreground text-sm">
-                Pending Withdrawals
-              </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <Card className="bg-[#2a2a2a] border-gray-700">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-white">{stats.total}</p>
+                <p className="text-sm text-gray-400">Total Requests</p>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/90 backdrop-blur-sm border-border/50">
-            <CardContent className="p-6 text-center">
-              <AlertTriangle className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-foreground">
-                ₹
-                {withdrawals
-                  .reduce((sum, w) => sum + w.amount, 0)
-                  .toLocaleString()}
-              </p>
-              <p className="text-muted-foreground text-sm">Total Amount</p>
+          <Card className="bg-yellow-500/20 border-yellow-500/30">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-yellow-400">
+                  {stats.pending}
+                </p>
+                <p className="text-sm text-yellow-300">Pending</p>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/90 backdrop-blur-sm border-border/50">
-            <CardContent className="p-6 text-center">
-              <Eye className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-              <p className="text-2xl font-bold text-foreground">
-                {
-                  withdrawals.filter(
-                    (w) =>
-                      new Date(w.createdAt) > new Date(Date.now() - 86400000),
-                  ).length
-                }
-              </p>
-              <p className="text-muted-foreground text-sm">Today's Requests</p>
+          <Card className="bg-green-500/20 border-green-500/30">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-green-400">
+                  {stats.approved}
+                </p>
+                <p className="text-sm text-green-300">Approved</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-red-500/20 border-red-500/30">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-red-400">
+                  {stats.rejected}
+                </p>
+                <p className="text-sm text-red-300">Rejected</p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-blue-500/20 border-blue-500/30">
+            <CardContent className="p-4">
+              <div className="text-center">
+                <p className="text-2xl font-bold text-blue-400">
+                  ₹{stats.totalAmount.toLocaleString()}
+                </p>
+                <p className="text-sm text-blue-300">Total Approved</p>
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Withdrawals Table */}
-        <Card className="bg-card/90 backdrop-blur-sm border-border/50">
+        {/* Filter */}
+        <Card className="bg-[#2a2a2a] border-gray-700 mb-6">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <Label className="text-gray-300">Filter by Status:</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-48 bg-[#1a1a1a] border-gray-600 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Withdrawals</SelectItem>
+                  <SelectItem value="pending">Pending Only</SelectItem>
+                  <SelectItem value="completed">Approved Only</SelectItem>
+                  <SelectItem value="rejected">Rejected Only</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Withdrawals List */}
+        <Card className="bg-[#2a2a2a] border-gray-700">
           <CardHeader>
-            <CardTitle className="text-foreground">
-              Pending Withdrawal Requests
+            <CardTitle className="text-white flex items-center gap-2">
+              <DollarSign className="h-5 w-5" />
+              Withdrawal Requests ({withdrawals.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="flex justify-center py-8">
-                <div className="animate-spin w-8 h-8 border-4 border-matka-gold border-t-transparent rounded-full"></div>
-              </div>
-            ) : withdrawals.length === 0 ? (
+            {withdrawals.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  No pending withdrawals found
-                </p>
+                <p className="text-gray-400">No withdrawal requests found</p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="text-foreground">User</TableHead>
-                      <TableHead className="text-foreground">Amount</TableHead>
-                      <TableHead className="text-foreground">
-                        Bank Details
-                      </TableHead>
-                      <TableHead className="text-foreground">
-                        Request Date
-                      </TableHead>
-                      <TableHead className="text-foreground">Status</TableHead>
-                      <TableHead className="text-foreground">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {withdrawals.map((withdrawal) => (
-                      <TableRow key={withdrawal._id}>
-                        <TableCell>
-                          <div>
-                            <p className="text-foreground font-medium">
-                              {withdrawal.userId.fullName}
-                            </p>
-                            <p className="text-muted-foreground text-sm">
-                              {withdrawal.userId.mobile}
-                            </p>
-                            <p className="text-muted-foreground text-xs">
-                              {withdrawal.userId.email}
-                            </p>
+              <div className="space-y-4">
+                {withdrawals.map((withdrawal) => (
+                  <Card
+                    key={withdrawal._id}
+                    className="bg-[#1a1a1a] border-gray-600"
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-4 mb-3">
+                            <Badge
+                              className={getStatusColor(withdrawal.status)}
+                            >
+                              {withdrawal.status.toUpperCase()}
+                            </Badge>
+                            <span className="text-sm text-gray-400">
+                              {formatDate(withdrawal.createdAt)}
+                            </span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-foreground font-bold text-lg">
-                            ₹{withdrawal.amount.toLocaleString()}
-                          </p>
-                        </TableCell>
-                        <TableCell>
-                          {withdrawal.bankDetails ? (
-                            <div className="text-sm">
-                              <p className="text-foreground font-medium">
-                                {withdrawal.bankDetails.bankName}
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <p className="text-white font-semibold flex items-center gap-2">
+                                <User className="h-4 w-4" />
+                                {withdrawal.userId.fullName}
                               </p>
-                              <p className="text-muted-foreground">
-                                Acc: {withdrawal.bankDetails.accountNumber}
-                              </p>
-                              <p className="text-muted-foreground">
-                                IFSC: {withdrawal.bankDetails.ifscCode}
-                              </p>
-                              <p className="text-muted-foreground">
-                                Name: {withdrawal.bankDetails.accountHolderName}
+                              <p className="text-gray-400 text-sm">
+                                {withdrawal.userId.mobile} •{" "}
+                                {withdrawal.userId.email}
                               </p>
                             </div>
-                          ) : (
-                            <p className="text-muted-foreground text-sm">
-                              No bank details
-                            </p>
+
+                            <div>
+                              <p className="text-white font-semibold">
+                                ₹{withdrawal.amount.toLocaleString()}
+                              </p>
+                              {withdrawal.bankDetails && (
+                                <div className="text-gray-400 text-sm">
+                                  <p>{withdrawal.bankDetails.bankName}</p>
+                                  <p>
+                                    A/C: {withdrawal.bankDetails.accountNumber}
+                                  </p>
+                                  <p>IFSC: {withdrawal.bankDetails.ifscCode}</p>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleViewWithdrawal(withdrawal)}
+                                className="text-gray-300 border-gray-600 hover:bg-gray-700"
+                              >
+                                <Eye className="h-3 w-3 mr-1" />
+                                View
+                              </Button>
+                              {withdrawal.status === "pending" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedWithdrawal(withdrawal);
+                                      setActionType("approve");
+                                      setAdminNotes("");
+                                      setShowDialog(true);
+                                    }}
+                                    className="bg-green-600 hover:bg-green-700 text-white"
+                                  >
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    Approve
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedWithdrawal(withdrawal);
+                                      setActionType("reject");
+                                      setAdminNotes("");
+                                      setShowDialog(true);
+                                    }}
+                                    className="bg-red-600 hover:bg-red-700 text-white"
+                                  >
+                                    <XCircle className="h-3 w-3 mr-1" />
+                                    Reject
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          {withdrawal.status !== "pending" &&
+                            withdrawal.processedBy && (
+                              <div className="mt-2 text-sm text-gray-400">
+                                {withdrawal.status === "completed"
+                                  ? "Approved"
+                                  : "Rejected"}{" "}
+                                by {withdrawal.processedBy.fullName}
+                                {withdrawal.processedAt &&
+                                  ` on ${formatDate(withdrawal.processedAt)}`}
+                              </div>
+                            )}
+
+                          {withdrawal.adminNotes && (
+                            <div className="mt-3 p-2 bg-gray-800 rounded">
+                              <p className="text-gray-300 text-sm">
+                                <strong>Admin Notes:</strong>{" "}
+                                {withdrawal.adminNotes}
+                              </p>
+                            </div>
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="text-foreground text-sm">
-                              {new Date(
-                                withdrawal.createdAt,
-                              ).toLocaleDateString()}
-                            </p>
-                            <p className="text-muted-foreground text-xs">
-                              {new Date(
-                                withdrawal.createdAt,
-                              ).toLocaleTimeString()}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-500/20 text-orange-500">
-                            {withdrawal.status}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                openProcessDialog(withdrawal, "approve")
-                              }
-                              className="bg-green-600 hover:bg-green-700 text-white"
-                            >
-                              <CheckCircle className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="destructive"
-                              onClick={() =>
-                                openProcessDialog(withdrawal, "reject")
-                              }
-                            >
-                              <XCircle className="h-4 w-4 mr-1" />
-                              Reject
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
             )}
           </CardContent>
         </Card>
-      </div>
 
-      {/* Process Withdrawal Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="bg-card border-border">
-          <DialogHeader>
-            <DialogTitle className="text-foreground">
-              {actionType === "approve" ? "Approve" : "Reject"} Withdrawal
-            </DialogTitle>
-          </DialogHeader>
-          {selectedWithdrawal && (
-            <div className="space-y-4">
-              <div className="bg-muted/20 p-4 rounded-lg">
-                <h4 className="text-foreground font-medium mb-2">
-                  Withdrawal Details
-                </h4>
-                <div className="space-y-2 text-sm">
-                  <p className="text-muted-foreground">
-                    <span className="text-foreground">User:</span>{" "}
-                    {selectedWithdrawal.userId.fullName}
-                  </p>
-                  <p className="text-muted-foreground">
-                    <span className="text-foreground">Amount:</span> ₹
-                    {selectedWithdrawal.amount.toLocaleString()}
-                  </p>
-                  <p className="text-muted-foreground">
-                    <span className="text-foreground">Mobile:</span>{" "}
-                    {selectedWithdrawal.userId.mobile}
-                  </p>
-                  {selectedWithdrawal.bankDetails && (
-                    <div>
-                      <p className="text-muted-foreground">
-                        <span className="text-foreground">Bank:</span>{" "}
+        {/* Process Withdrawal Dialog */}
+        <Dialog open={showDialog} onOpenChange={setShowDialog}>
+          <DialogContent className="sm:max-w-[600px] bg-[#2a2a2a] border-gray-700">
+            <DialogHeader>
+              <DialogTitle className="text-white">
+                {actionType === "approve" ? "Approve" : "Reject"} Withdrawal
+              </DialogTitle>
+            </DialogHeader>
+            {selectedWithdrawal && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-gray-300">User</Label>
+                    <p className="text-white">
+                      {selectedWithdrawal.userId.fullName}
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      {selectedWithdrawal.userId.mobile}
+                    </p>
+                  </div>
+                  <div>
+                    <Label className="text-gray-300">Amount</Label>
+                    <p className="text-white text-xl font-bold">
+                      ₹{selectedWithdrawal.amount.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedWithdrawal.bankDetails && (
+                  <div>
+                    <Label className="text-gray-300">Bank Details</Label>
+                    <div className="bg-gray-800 p-3 rounded mt-2 text-sm">
+                      <p className="text-white">
+                        <strong>Bank:</strong>{" "}
                         {selectedWithdrawal.bankDetails.bankName}
                       </p>
-                      <p className="text-muted-foreground">
-                        <span className="text-foreground">Account:</span>{" "}
+                      <p className="text-white">
+                        <strong>Account:</strong>{" "}
                         {selectedWithdrawal.bankDetails.accountNumber}
                       </p>
-                      <p className="text-muted-foreground">
-                        <span className="text-foreground">IFSC:</span>{" "}
+                      <p className="text-white">
+                        <strong>IFSC:</strong>{" "}
                         {selectedWithdrawal.bankDetails.ifscCode}
                       </p>
+                      <p className="text-white">
+                        <strong>Name:</strong>{" "}
+                        {selectedWithdrawal.bankDetails.accountHolderName}
+                      </p>
                     </div>
-                  )}
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor="adminNotes" className="text-gray-300">
+                    Admin Notes{" "}
+                    {actionType === "reject" && "(Required for rejection)"}
+                  </Label>
+                  <Textarea
+                    id="adminNotes"
+                    placeholder={
+                      actionType === "approve"
+                        ? "Optional notes for approval..."
+                        : "Reason for rejection..."
+                    }
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    className="mt-2 bg-[#1a1a1a] border-gray-600 text-white"
+                    rows={3}
+                    disabled={selectedWithdrawal.status !== "pending"}
+                  />
                 </div>
-              </div>
 
-              <div>
-                <Label htmlFor="adminNotes" className="text-foreground">
-                  Admin Notes {actionType === "reject" && "(Required)"}
-                </Label>
-                <Textarea
-                  id="adminNotes"
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                  placeholder={
-                    actionType === "approve"
-                      ? "Optional notes for approval..."
-                      : "Reason for rejection..."
-                  }
-                  className="mt-2 bg-input border-border text-foreground"
-                  rows={3}
-                />
-              </div>
+                {selectedWithdrawal.status === "pending" && (
+                  <DialogFooter className="gap-2">
+                    <Button
+                      onClick={() => handleProcessWithdrawal()}
+                      disabled={
+                        processing ||
+                        (actionType === "reject" && !adminNotes.trim())
+                      }
+                      className={
+                        actionType === "approve"
+                          ? "bg-green-500 hover:bg-green-600 text-white"
+                          : "bg-red-500 hover:bg-red-600 text-white"
+                      }
+                    >
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      {processing
+                        ? "Processing..."
+                        : actionType === "approve"
+                          ? "Approve Withdrawal"
+                          : "Reject Withdrawal"}
+                    </Button>
+                  </DialogFooter>
+                )}
 
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleProcessWithdrawal}
-                  disabled={
-                    processing ||
-                    (actionType === "reject" && !adminNotes.trim())
-                  }
-                  className={
-                    actionType === "approve"
-                      ? "bg-green-600 hover:bg-green-700 text-white flex-1"
-                      : "bg-red-600 hover:bg-red-700 text-white flex-1"
-                  }
-                >
-                  {processing
-                    ? "Processing..."
-                    : actionType === "approve"
-                      ? "Approve Withdrawal"
-                      : "Reject Withdrawal"}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowDialog(false)}
-                  disabled={processing}
-                  className="border-border text-foreground hover:bg-muted"
-                >
-                  Cancel
-                </Button>
+                {selectedWithdrawal.status !== "pending" && (
+                  <div className="bg-gray-800 p-3 rounded">
+                    <p className="text-gray-300">
+                      <strong>Status:</strong>{" "}
+                      <span
+                        className={
+                          selectedWithdrawal.status === "completed"
+                            ? "text-green-400"
+                            : "text-red-400"
+                        }
+                      >
+                        {selectedWithdrawal.status.toUpperCase()}
+                      </span>
+                    </p>
+                    {selectedWithdrawal.adminNotes && (
+                      <p className="text-gray-300 mt-2">
+                        <strong>Admin Notes:</strong>{" "}
+                        {selectedWithdrawal.adminNotes}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 };

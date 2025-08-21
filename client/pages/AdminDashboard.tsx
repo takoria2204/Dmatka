@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Eye,
   Megaphone,
+  TrendingUp,
 } from "lucide-react";
 
 interface DashboardStats {
@@ -147,6 +148,8 @@ const AdminDashboard = () => {
 
   const sidebarItems = [
     { name: "Dashboard", icon: FileText, active: true },
+    { name: "Game Management", icon: Settings },
+    { name: "Payout Management", icon: TrendingUp },
     { name: "Betting", icon: Trophy },
     { name: "Users", icon: Users },
     { name: "Transactions", icon: CreditCard },
@@ -158,18 +161,29 @@ const AdminDashboard = () => {
     { name: "Admin Management", icon: Shield },
     { name: "Settings", icon: Settings },
     { name: "Reports & Downloads", icon: Download },
-    { name: "Game Results", icon: Trophy },
     { name: "Testing", icon: TestTube },
   ];
 
   const handleMenuClick = (item: string) => {
     setActiveMenu(item);
     switch (item) {
+      case "Game Management":
+        navigate("/admin/game-management");
+        break;
+      case "Payout Management":
+        navigate("/admin/payout-management");
+        break;
+      case "Betting":
+        navigate("/admin/bets");
+        break;
       case "Users":
         navigate("/admin/users");
         break;
       case "Transactions":
         navigate("/admin/transactions");
+        break;
+      case "Withdrawals":
+        navigate("/admin/withdrawals");
         break;
       case "Payment Gateway":
         navigate("/admin/payment-gateways");
@@ -182,6 +196,18 @@ const AdminDashboard = () => {
         break;
       case "Support Tickets":
         navigate("/admin/support");
+        break;
+      case "Admin Management":
+        navigate("/admin/management");
+        break;
+      case "Settings":
+        navigate("/admin/settings");
+        break;
+      case "Reports & Downloads":
+        navigate("/admin/reports");
+        break;
+      case "Testing":
+        navigate("/admin/testing");
         break;
       default:
         break;

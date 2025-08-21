@@ -5,7 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -22,16 +21,13 @@ import {
 } from "@/components/ui/select";
 import {
   ArrowLeft,
-  Plus,
-  Edit,
-  Trash2,
-  Trophy,
-  CheckCircle,
   RefreshCw,
-  Megaphone,
+  Trophy,
+  DollarSign,
+  Users,
   Clock,
+  CheckCircle,
   AlertCircle,
-  Settings,
 } from "lucide-react";
 
 interface Game {
@@ -48,11 +44,6 @@ interface Game {
   harufPayout: number;
   crossingPayout: number;
   currentStatus: string;
-  isActive: boolean;
-  todayBets?: number;
-  todayBetAmount?: number;
-  hasResult?: boolean;
-  needsResult?: boolean;
 }
 
 interface GameResult {
@@ -76,15 +67,23 @@ interface GameResult {
   declaredAt?: string;
 }
 
-const AdminResults = () => {
+const AdminGameResults = () => {
   const [games, setGames] = useState<Game[]>([]);
   const [results, setResults] = useState<GameResult[]>([]);
+  const [stats, setStats] = useState({
+    totalResults: 0,
+    pendingCount: 0,
+    declaredCount: 0,
+    cancelledCount: 0,
+    todayProfit: 0,
+  });
   const [loading, setLoading] = useState(true);
   const [declaring, setDeclaring] = useState(false);
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [showDeclareModal, setShowDeclareModal] = useState(false);
-  const [activeTab, setActiveTab] = useState("pending");
-  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "pending" | "declared" | "cancelled" | "all"
+  >("pending");
   const [resultData, setResultData] = useState({
     jodiResult: "",
     harufResult: "",
@@ -103,134 +102,96 @@ const AdminResults = () => {
       return;
     }
 
-    // Update payout rates first, then fetch data
-    updatePayoutRates().then(() => {
-      fetchData();
-    });
+    fetchData();
 
-    // Auto-refresh every 30 seconds to get real-time updates
+    // Auto-refresh data every 30 seconds
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
   }, [navigate]);
 
-  const updatePayoutRates = async () => {
-    try {
-      const token = localStorage.getItem("admin_token");
-      await fetch("/api/admin/games/update-payouts", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      console.log("✅ Payout rates updated");
-    } catch (error) {
-      console.error("Failed to update payout rates:", error);
-    }
-  };
-
   const fetchData = async () => {
     try {
-      if (!refreshing) setLoading(true);
+      setLoading(true);
       const token = localStorage.getItem("admin_token");
 
-      console.log("🔄 Fetching latest data from backend...");
-
-      const today = new Date().toISOString().split("T")[0];
-      const [gamesResponse, resultsResponse, betsResponse] = await Promise.all([
+      const [gamesResponse, resultsResponse] = await Promise.all([
         fetch("/api/admin/games", {
           headers: { Authorization: `Bearer ${token}` },
         }),
-        fetch("/api/admin/game-results?limit=100", {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        fetch(`/api/admin/bets?date=${today}&limit=1000`, {
+        fetch("/api/admin/game-results?limit=50", {
           headers: { Authorization: `Bearer ${token}` },
         }),
       ]);
 
-      let gamesList = [];
-      let resultsList = [];
-      let todayBets = [];
-
       if (gamesResponse.ok) {
         const gamesData = await gamesResponse.json();
-        gamesList = gamesData.data.games || [];
+        const gamesList = gamesData.data.games || [];
         setGames(gamesList);
-        console.log("✅ Games loaded:", gamesList.length);
-      } else {
-        console.error("❌ Failed to fetch games:", gamesResponse.status);
       }
 
       if (resultsResponse.ok) {
         const resultsData = await resultsResponse.json();
-        resultsList = resultsData.data.results || [];
+        const resultsList = resultsData.data.results || [];
         setResults(resultsList);
-        console.log("✅ Results loaded:", resultsList.length);
-      } else {
-        console.error("❌ Failed to fetch results:", resultsResponse.status);
+
+        // Calculate real-time statistics after games are loaded
+        setTimeout(() => {
+          const today = new Date().toISOString().split("T")[0];
+          const todayResults = resultsList.filter((r: GameResult) =>
+            r.resultDate.startsWith(today),
+          );
+
+          const currentGames = gamesData.data.games || [];
+          const pendingGames = currentGames.filter(
+            (g: Game) =>
+              g.currentStatus === "open" || g.currentStatus === "closed",
+          ).length;
+
+          const declaredToday = todayResults.filter(
+            (r: GameResult) => r.status === "declared",
+          ).length;
+
+          const todayProfit = todayResults.reduce(
+            (sum: number, r: GameResult) => sum + (r.netProfit || 0),
+            0,
+          );
+
+          setStats({
+            totalResults: resultsList.length,
+            pendingCount: pendingGames,
+            declaredCount: declaredToday,
+            cancelledCount: 0, // Can be calculated if you have cancelled results
+            todayProfit: todayProfit,
+          });
+        }, 100);
       }
-
-      if (betsResponse.ok) {
-        const betsData = await betsResponse.json();
-        todayBets = betsData.data.bets || [];
-        console.log("✅ Today's bets loaded:", todayBets.length);
-      } else {
-        console.error("❌ Failed to fetch bets:", betsResponse.status);
-        // Don't break if bets API fails
-        todayBets = [];
-      }
-
-      // Enhance games with betting statistics
-      const gamesWithStats = gamesList.map((game) => {
-        const gameBets = todayBets.filter(
-          (bet) => bet.gameId === game._id || bet.gameId?._id === game._id,
-        );
-        const totalBets = gameBets.length;
-        const totalBetAmount = gameBets.reduce(
-          (sum, bet) => sum + (bet.betAmount || 0),
-          0,
-        );
-        const hasResult = resultsList.some(
-          (result) =>
-            (result.gameId === game._id || result.gameId?._id === game._id) &&
-            result.resultDate.startsWith(today),
-        );
-
-        return {
-          ...game,
-          todayBets: totalBets,
-          todayBetAmount: totalBetAmount,
-          hasResult: hasResult,
-          needsResult:
-            totalBets > 0 &&
-            !hasResult &&
-            (game.currentStatus === "closed" ||
-              game.currentStatus === "result_declared"),
-        };
-      });
-
-      setGames(gamesWithStats);
     } catch (error) {
-      console.error("❌ Error fetching data:", error);
+      console.error("Error fetching data:", error);
+      // Set fallback stats to avoid showing empty data
+      setStats({
+        totalResults: results.length,
+        pendingCount: games.filter(
+          (g) => g.currentStatus === "open" || g.currentStatus === "closed",
+        ).length,
+        declaredCount: results.filter((r) => r.status === "declared").length,
+        cancelledCount: 0,
+        todayProfit: 0,
+      });
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await fetchData();
   };
 
   const handleDeclareResult = async () => {
     if (!selectedGame) return;
 
-    // Validate result data based on game type
+    // Validate result data
     if (selectedGame.type === "jodi" && !resultData.jodiResult) {
-      alert("Please enter Jodi result (2 digits: 00-99)");
+      alert("Please enter Jodi result");
       return;
     }
     if (selectedGame.type === "haruf" && !resultData.harufResult) {
-      alert("Please enter Haruf result (1 digit: 0-9)");
+      alert("Please enter Haruf result");
       return;
     }
     if (selectedGame.type === "crossing" && !resultData.crossingResult) {
@@ -238,21 +199,9 @@ const AdminResults = () => {
       return;
     }
 
-    const confirmDeclare = confirm(
-      `⚠️ CONFIRM RESULT DECLARATION\n\nGame: ${selectedGame.name}\nType: ${selectedGame.type.toUpperCase()}\nResult: ${
-        resultData.jodiResult ||
-        resultData.harufResult ||
-        resultData.crossingResult
-      }\n\n⚠️ Once declared, this cannot be undone!\nProceed?`,
-    );
-
-    if (!confirmDeclare) return;
-
     setDeclaring(true);
     try {
       const token = localStorage.getItem("admin_token");
-      console.log("🎯 Declaring result for game:", selectedGame.name);
-
       const response = await fetch(
         `/api/admin/games/${selectedGame._id}/declare-result`,
         {
@@ -271,17 +220,11 @@ const AdminResults = () => {
         const result = data.data;
         console.log("✅ Result declared successfully:", data);
 
-        alert(`🎉 RESULT DECLARED SUCCESSFULLY!
+        // Show success message using toast
+        const successMessage = `Result Declared Successfully! Game: ${selectedGame.name}, Winners: ${result.winnersCount}, Profit: ₹${result.netProfit.toLocaleString()}`;
 
-📊 Game: ${selectedGame.name}
-🎯 Result: ${resultData.jodiResult || resultData.harufResult || resultData.crossingResult}
-👥 Winners: ${result.winnersCount} players
-💰 Total Winnings: ₹${result.totalWinningAmount.toLocaleString()}
-📈 Platform Profit: ₹${result.netProfit.toLocaleString()}
-
-✅ All winnings have been credited to winners' accounts!`);
-
-        // Close modal and reset form
+        // You can replace this with a toast notification if available
+        alert(`🎉 ${successMessage}`);
         setShowDeclareModal(false);
         setSelectedGame(null);
         setResultData({
@@ -290,19 +233,18 @@ const AdminResults = () => {
           crossingResult: "",
           resultDate: new Date().toISOString().split("T")[0],
         });
-
-        // Immediately refresh data to show updated results
+        // Immediately refresh data to show updated statistics
         setTimeout(fetchData, 500);
       } else {
         console.error("❌ Failed to declare result:", data);
         alert(
-          `❌ FAILED TO DECLARE RESULT\n\n${data.message || "Unknown error occurred"}\n\nPlease try again.`,
+          `❌ Failed to declare result: ${data.message || "Unknown error occurred"}`,
         );
       }
     } catch (error) {
-      console.error("❌ Network error declaring result:", error);
+      console.error("Error declaring result:", error);
       alert(
-        "❌ NETWORK ERROR\n\nFailed to declare result. Please check your connection and try again.",
+        "❌ Network error: Failed to declare result. Please check your connection and try again.",
       );
     } finally {
       setDeclaring(false);
@@ -330,38 +272,10 @@ const AdminResults = () => {
     });
   };
 
-  // Calculate real-time statistics
-  const pendingGames = games.filter(
-    (game) =>
-      game.needsResult ||
-      (game.todayBets && game.todayBets > 0 && !game.hasResult),
-  );
-
-  const declaredResults = results.filter(
-    (result) => result.status === "declared",
-  );
-
-  const today = new Date().toISOString().split("T")[0];
-  const todayResults = results.filter(
-    (result) =>
-      result.resultDate.startsWith(today) && result.status === "declared",
-  );
-
-  const stats = {
-    totalResults: results.length,
-    pending: pendingGames.length,
-    declared: declaredResults.length,
-    cancelled: 0,
-    todayProfit: todayResults.reduce((sum, r) => sum + (r.netProfit || 0), 0),
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1a1a1a] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading results...</p>
-        </div>
+        <div className="animate-spin w-8 h-8 border-4 border-yellow-500 border-t-transparent rounded-full"></div>
       </div>
     );
   }
@@ -387,39 +301,22 @@ const AdminResults = () => {
           </div>
           <div className="flex gap-2">
             <Button
-              onClick={async () => {
-                setRefreshing(true);
-                await updatePayoutRates();
-                await fetchData();
-                setRefreshing(false);
-              }}
-              disabled={refreshing}
+              onClick={fetchData}
               className="bg-green-500 text-white hover:bg-green-600"
+              disabled={loading}
             >
               <RefreshCw
-                className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+                className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
               />
               Refresh
             </Button>
             <Button
-              onClick={async () => {
-                try {
-                  await updatePayoutRates();
-                  alert(
-                    "✅ Payout rates updated!\n\nJodi: 95:1\nHaruf: 9:1\nCrossing: 95:1",
-                  );
-                } catch (error) {
-                  alert("❌ Failed to update payout rates");
-                }
-              }}
-              className="bg-blue-500 text-white hover:bg-blue-600"
-            >
-              <Settings className="h-4 w-4 mr-2" />
-              Update Payouts
-            </Button>
-            <Button
               onClick={() => {
-                const pendingGame = pendingGames[0];
+                // Show first available pending game for quick declaration
+                const pendingGame = games.find(
+                  (g) =>
+                    g.currentStatus === "open" || g.currentStatus === "closed",
+                );
                 if (pendingGame) {
                   openDeclareModal(pendingGame);
                 } else {
@@ -428,48 +325,14 @@ const AdminResults = () => {
               }}
               className="bg-yellow-500 text-black hover:bg-yellow-600"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Trophy className="h-4 w-4 mr-2" />
               Add Result
             </Button>
           </div>
         </div>
 
-        {/* Today's Betting Summary */}
-        <Card className="bg-blue-600 border-blue-500 mb-6">
-          <CardContent className="p-4">
-            <div className="text-center text-white">
-              <h2 className="text-lg font-bold mb-2">
-                📅 Today's Betting Summary
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <p className="text-2xl font-bold">
-                    {games.filter((g) => g.todayBets && g.todayBets > 0).length}
-                  </p>
-                  <p className="text-sm">Games with Bets</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    {games.filter((g) => g.needsResult).length}
-                  </p>
-                  <p className="text-sm">Need Results</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">
-                    ₹
-                    {games
-                      .reduce((sum, g) => sum + (g.todayBetAmount || 0), 0)
-                      .toLocaleString()}
-                  </p>
-                  <p className="text-sm">Total Bet Amount</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
           <Card className="bg-[#2a2a2a] border-gray-700">
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-white">
@@ -482,7 +345,7 @@ const AdminResults = () => {
           <Card className="bg-yellow-600 border-yellow-500">
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-white">
-                {stats.pending}
+                {stats.pendingCount}
               </div>
               <div className="text-sm text-yellow-100">Pending</div>
             </CardContent>
@@ -491,7 +354,7 @@ const AdminResults = () => {
           <Card className="bg-green-600 border-green-500">
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-white">
-                {stats.declared}
+                {stats.declaredCount}
               </div>
               <div className="text-sm text-green-100">Declared</div>
             </CardContent>
@@ -500,7 +363,7 @@ const AdminResults = () => {
           <Card className="bg-red-600 border-red-500">
             <CardContent className="p-4 text-center">
               <div className="text-2xl font-bold text-white">
-                {stats.cancelled}
+                {stats.cancelledCount}
               </div>
               <div className="text-sm text-red-100">Cancelled</div>
             </CardContent>
@@ -516,6 +379,55 @@ const AdminResults = () => {
           </Card>
         </div>
 
+        {/* Games List */}
+        <Card className="bg-[#2a2a2a] border-gray-700 mb-6">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Trophy className="h-5 w-5" />
+              Active Games - Declare Results
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {games.map((game) => (
+                <Card key={game._id} className="bg-[#1a1a1a] border-gray-600">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-white font-semibold">{game.name}</h3>
+                      <Badge
+                        className={
+                          game.currentStatus === "open"
+                            ? "bg-green-500"
+                            : "bg-yellow-500"
+                        }
+                      >
+                        {game.currentStatus}
+                      </Badge>
+                    </div>
+                    <div className="space-y-2 text-sm text-gray-400 mb-4">
+                      <p>Type: {game.type.toUpperCase()}</p>
+                      <p>
+                        Time: {game.startTime} - {game.endTime}
+                      </p>
+                      <p>Result Time: {game.resultTime}</p>
+                      <p>
+                        Bet Range: ₹{game.minBet} - ₹{game.maxBet}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => openDeclareModal(game)}
+                      className="w-full bg-yellow-500 text-black hover:bg-yellow-600"
+                    >
+                      <Trophy className="h-4 w-4 mr-2" />
+                      Declare Result
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Game Results Section */}
         <Card className="bg-[#2a2a2a] border-gray-700">
           <CardHeader>
@@ -525,32 +437,64 @@ const AdminResults = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-4 bg-[#1a1a1a]">
-                <TabsTrigger value="pending" className="text-white">
-                  Pending ({stats.pending})
-                </TabsTrigger>
-                <TabsTrigger value="declared" className="text-white">
-                  Declared ({stats.declared})
-                </TabsTrigger>
-                <TabsTrigger value="cancelled" className="text-white">
-                  Cancelled ({stats.cancelled})
-                </TabsTrigger>
-                <TabsTrigger value="all" className="text-white">
-                  All ({stats.totalResults})
-                </TabsTrigger>
-              </TabsList>
+            {/* Tabs for filtering */}
+            <div className="flex space-x-1 mb-6 bg-gray-800 p-1 rounded-lg">
+              {[
+                {
+                  key: "pending",
+                  label: `Pending (${stats.pendingCount})`,
+                  color: "text-yellow-400",
+                },
+                {
+                  key: "declared",
+                  label: `Declared (${stats.declaredCount})`,
+                  color: "text-green-400",
+                },
+                {
+                  key: "cancelled",
+                  label: `Cancelled (${stats.cancelledCount})`,
+                  color: "text-red-400",
+                },
+                {
+                  key: "all",
+                  label: `All (${stats.totalResults})`,
+                  color: "text-blue-400",
+                },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key as typeof activeTab)}
+                  className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                    activeTab === tab.key
+                      ? "bg-gray-700 text-white"
+                      : `hover:bg-gray-700 ${tab.color}`
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-              {/* Pending Tab */}
-              <TabsContent value="pending" className="mt-6">
-                {pendingGames.length === 0 ? (
+            {/* Results Display */}
+            {activeTab === "pending" && (
+              <div className="space-y-4">
+                {games.filter(
+                  (game) =>
+                    game.currentStatus === "open" ||
+                    game.currentStatus === "closed",
+                ).length === 0 ? (
                   <div className="text-center py-8">
                     <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-400">No pending results found</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {pendingGames.map((game) => (
+                  games
+                    .filter(
+                      (game) =>
+                        game.currentStatus === "open" ||
+                        game.currentStatus === "closed",
+                    )
+                    .map((game) => (
                       <Card
                         key={game._id}
                         className="bg-[#1a1a1a] border-gray-600"
@@ -565,12 +509,6 @@ const AdminResults = () => {
                                 <h3 className="text-white font-semibold text-lg">
                                   {game.name}
                                 </h3>
-                                <Badge
-                                  variant="outline"
-                                  className="text-gray-300"
-                                >
-                                  {game.type.toUpperCase()}
-                                </Badge>
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                                 <div>
@@ -583,40 +521,23 @@ const AdminResults = () => {
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="text-gray-400">Today's Bets</p>
-                                  <p className="text-blue-400 font-bold text-lg">
-                                    {game.todayBets || 0} bets
+                                  <p className="text-gray-400">
+                                    Winning Number
                                   </p>
-                                  <p className="text-gray-300 text-sm">
-                                    ₹
-                                    {(
-                                      game.todayBetAmount || 0
-                                    ).toLocaleString()}
+                                  <p className="text-yellow-400 font-bold text-lg">
+                                    -
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="text-gray-400">Status</p>
-                                  <p className="text-white capitalize">
-                                    {game.currentStatus}
+                                  <p className="text-gray-400">
+                                    Bets & Winning
                                   </p>
-                                  <p className="text-gray-300 text-sm">
-                                    {game.needsResult
-                                      ? "Needs Result"
-                                      : "Ready"}
-                                  </p>
+                                  <p className="text-white">- bets</p>
+                                  <p className="text-gray-300">₹-</p>
                                 </div>
                                 <div>
-                                  <p className="text-gray-400">Result Time</p>
-                                  <p className="text-white">
-                                    {game.resultTime}
-                                  </p>
-                                  {game.todayBets &&
-                                    game.todayBets > 0 &&
-                                    !game.hasResult && (
-                                      <p className="text-red-400 text-sm font-semibold">
-                                        ⚠️ Result Pending
-                                      </p>
-                                    )}
+                                  <p className="text-gray-400">Profit</p>
+                                  <p className="text-white">₹-</p>
                                 </div>
                               </div>
                             </div>
@@ -626,28 +547,42 @@ const AdminResults = () => {
                                 className="bg-green-500 text-white hover:bg-green-600"
                                 size="sm"
                               >
-                                <Megaphone className="h-3 w-3 mr-1" />
                                 Declare
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                                size="sm"
+                              >
+                                Delete
                               </Button>
                             </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
+                    ))
                 )}
-              </TabsContent>
+              </div>
+            )}
 
-              {/* Declared Tab */}
-              <TabsContent value="declared" className="mt-6">
-                {declaredResults.length === 0 ? (
+            {(activeTab === "declared" || activeTab === "all") && (
+              <div className="space-y-4">
+                {results.filter(
+                  (result) =>
+                    activeTab === "all" || result.status === "declared",
+                ).length === 0 ? (
                   <div className="text-center py-8">
                     <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-400">No declared results found</p>
+                    <p className="text-gray-400">No results found</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {declaredResults.slice(0, 20).map((result) => (
+                  results
+                    .filter(
+                      (result) =>
+                        activeTab === "all" || result.status === "declared",
+                    )
+                    .slice(0, 20)
+                    .map((result) => (
                       <Card
                         key={result._id}
                         className="bg-[#1a1a1a] border-gray-600"
@@ -662,12 +597,6 @@ const AdminResults = () => {
                                 <h3 className="text-white font-semibold text-lg">
                                   {result.gameName}
                                 </h3>
-                                <Badge
-                                  variant="outline"
-                                  className="text-gray-300"
-                                >
-                                  {result.gameType.toUpperCase()}
-                                </Badge>
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                                 <div>
@@ -722,90 +651,36 @@ const AdminResults = () => {
                                 </div>
                               </div>
                             </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
+                                size="sm"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="outline"
+                                className="border-red-600 text-red-400 hover:bg-red-600 hover:text-white"
+                                size="sm"
+                              >
+                                Delete
+                              </Button>
+                            </div>
                           </div>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
+                    ))
                 )}
-              </TabsContent>
+              </div>
+            )}
 
-              {/* All Tab */}
-              <TabsContent value="all" className="mt-6">
-                <div className="space-y-4">
-                  {/* Show pending games first */}
-                  {pendingGames.map((game) => (
-                    <Card
-                      key={`pending-${game._id}`}
-                      className="bg-[#1a1a1a] border-gray-600"
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <Badge className="bg-yellow-500 text-black">
-                                PENDING
-                              </Badge>
-                              <h3 className="text-white font-semibold text-lg">
-                                {game.name}
-                              </h3>
-                            </div>
-                            <p className="text-gray-400">
-                              Game ready for result declaration
-                            </p>
-                          </div>
-                          <Button
-                            onClick={() => openDeclareModal(game)}
-                            className="bg-green-500 text-white hover:bg-green-600"
-                            size="sm"
-                          >
-                            Declare
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-
-                  {/* Show declared results */}
-                  {declaredResults.slice(0, 10).map((result) => (
-                    <Card
-                      key={`declared-${result._id}`}
-                      className="bg-[#1a1a1a] border-gray-600"
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <Badge className="bg-green-500 text-white">
-                                DECLARED
-                              </Badge>
-                              <h3 className="text-white font-semibold text-lg">
-                                {result.gameName}
-                              </h3>
-                            </div>
-                            <p className="text-gray-400">
-                              Result:{" "}
-                              {result.jodiResult ||
-                                result.harufResult ||
-                                result.crossingResult}{" "}
-                              | Profit: ₹{result.netProfit.toLocaleString()}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-
-              {/* Cancelled Tab */}
-              <TabsContent value="cancelled" className="mt-6">
-                <div className="text-center py-8">
-                  <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-400">No cancelled results found</p>
-                </div>
-              </TabsContent>
-            </Tabs>
+            {activeTab === "cancelled" && (
+              <div className="text-center py-8">
+                <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-400">No cancelled results found</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -849,7 +724,8 @@ const AdminResults = () => {
                   />
                 </div>
 
-                {selectedGame.type === "jodi" && (
+                {(selectedGame.type === "jodi" ||
+                  selectedGame.type === "haruf") && (
                   <div>
                     <Label htmlFor="jodiResult" className="text-gray-300">
                       Jodi Result (2 digits: 00-99)
@@ -858,15 +734,12 @@ const AdminResults = () => {
                       id="jodiResult"
                       placeholder="Enter 2-digit result (e.g., 56)"
                       value={resultData.jodiResult}
-                      onChange={(e) => {
-                        const value = e.target.value
-                          .replace(/\D/g, "")
-                          .slice(0, 2);
+                      onChange={(e) =>
                         setResultData((prev) => ({
                           ...prev,
-                          jodiResult: value,
-                        }));
-                      }}
+                          jodiResult: e.target.value,
+                        }))
+                      }
                       className="mt-2 bg-[#1a1a1a] border-gray-600 text-white"
                       maxLength={2}
                     />
@@ -882,15 +755,12 @@ const AdminResults = () => {
                       id="harufResult"
                       placeholder="Enter single digit (e.g., 7)"
                       value={resultData.harufResult}
-                      onChange={(e) => {
-                        const value = e.target.value
-                          .replace(/\D/g, "")
-                          .slice(0, 1);
+                      onChange={(e) =>
                         setResultData((prev) => ({
                           ...prev,
-                          harufResult: value,
-                        }));
-                      }}
+                          harufResult: e.target.value,
+                        }))
+                      }
                       className="mt-2 bg-[#1a1a1a] border-gray-600 text-white"
                       maxLength={1}
                     />
@@ -919,9 +789,9 @@ const AdminResults = () => {
 
                 <div className="bg-yellow-500/20 border border-yellow-500/30 p-3 rounded">
                   <p className="text-yellow-300 text-sm">
-                    <strong>⚠️ WARNING:</strong> Once declared, this result
-                    cannot be changed. All winning bets will be automatically
-                    credited to users' wallets.
+                    <strong>Warning:</strong> Once declared, this result cannot
+                    be changed. All winning bets will be automatically credited
+                    to users' wallets.
                   </p>
                 </div>
               </div>
@@ -938,9 +808,9 @@ const AdminResults = () => {
               <Button
                 onClick={handleDeclareResult}
                 disabled={declaring}
-                className="bg-green-500 text-white hover:bg-green-600"
+                className="bg-yellow-500 text-black hover:bg-yellow-600"
               >
-                {declaring ? "Declaring..." : "🎯 Declare Result"}
+                {declaring ? "Declaring..." : "Declare Result"}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -950,4 +820,4 @@ const AdminResults = () => {
   );
 };
 
-export default AdminResults;
+export default AdminGameResults;

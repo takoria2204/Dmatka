@@ -39,6 +39,27 @@ import {
   updateTicketStatus,
   assignTicket,
 } from "./routes/support";
+import {
+  getWalletBalance,
+  getWalletTransactions,
+  getDepositHistory,
+  getWalletStats,
+  submitWithdrawalRequest,
+} from "./routes/wallet";
+import {
+  getAllGames,
+  getGameById,
+  placeBet,
+  getUserBets,
+  getGameResults,
+  createGame,
+  getAdminGames,
+  updateGame,
+  deleteGame,
+  declareResult,
+  forceGameStatus,
+  getGameAnalytics,
+} from "./routes/games";
 import auth from "./middleware/auth";
 import { adminAuth, superAdminAuth } from "./middleware/adminAuth";
 
@@ -98,6 +119,184 @@ export function createServer() {
   );
   app.get("/api/payment-requests/my", auth, getUserPaymentRequests);
   app.post("/api/upload", uploadFile);
+
+  // Wallet routes
+  app.get("/api/wallet/balance", auth, getWalletBalance);
+  app.get("/api/wallet/transactions", auth, getWalletTransactions);
+  app.get("/api/wallet/deposit-history", auth, getDepositHistory);
+  app.get("/api/wallet/stats", auth, getWalletStats);
+  app.post("/api/wallet/withdraw", auth, submitWithdrawalRequest);
+
+  // Games routes (specific routes MUST come before parameterized routes)
+  app.get("/api/games", getAllGames);
+  app.get("/api/games/results", getGameResults);
+  app.get("/api/games/user-bets", auth, getUserBets);
+  app.post("/api/games/place-bet", auth, placeBet);
+  app.get("/api/games/:gameId", auth, getGameById);
+
+  // Admin Game routes
+  app.get("/api/admin/games", adminAuth, getAdminGames);
+  app.post("/api/admin/games", adminAuth, createGame);
+  app.put("/api/admin/games/:gameId", adminAuth, updateGame);
+  app.delete("/api/admin/games/:gameId", adminAuth, deleteGame);
+  app.post("/api/admin/games/:gameId/declare-result", adminAuth, declareResult);
+  app.put("/api/admin/games/:gameId/force-status", adminAuth, forceGameStatus);
+  app.get("/api/admin/games/:gameId/analytics", adminAuth, getGameAnalytics);
+  app.get("/api/admin/game-results", adminAuth, getGameResults);
+  app.post("/api/admin/games/update-payouts", adminAuth, async (req, res) => {
+    try {
+      const Game = require("./models/Game").default;
+
+      // Update all games with new payout rates
+      const result = await Game.updateMany(
+        {}, // Update all games
+        {
+          $set: {
+            jodiPayout: 95, // Jodi: 95:1
+            harufPayout: 9, // Haruf: 9:1
+            crossingPayout: 95, // Crossing: 95:1
+          },
+        },
+      );
+
+      console.log("✅ Updated payout rates for", result.modifiedCount, "games");
+
+      res.json({
+        success: true,
+        message: `Updated ${result.modifiedCount} games with new payout rates`,
+        data: {
+          jodiPayout: 95,
+          harufPayout: 9,
+          crossingPayout: 95,
+          updatedCount: result.modifiedCount,
+        },
+      });
+    } catch (error) {
+      console.error("❌ Error updating payouts:", error);
+      res.status(500).json({ message: "Failed to update payouts" });
+    }
+  });
+
+  // Admin Management API endpoints (basic implementation)
+  app.get("/api/admin/management/admins", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Admin management API endpoint",
+      data: [], // Will be populated when backend is implemented
+    });
+  });
+
+  app.get("/api/admin/management/activities", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Activities API endpoint",
+      data: [], // Will be populated when backend is implemented
+    });
+  });
+
+  app.get("/api/admin/settings", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Settings API endpoint",
+      data: null, // Will be populated when backend is implemented
+    });
+  });
+
+  app.put("/api/admin/settings", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Settings updated successfully",
+    });
+  });
+
+  app.get("/api/admin/reports", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "Reports API endpoint",
+      data: null, // Will be populated when backend is implemented
+    });
+  });
+
+  app.get("/api/admin/system/health", adminAuth, (req, res) => {
+    res.json({
+      success: true,
+      message: "System health API endpoint",
+      data: null, // Will be populated when backend is implemented
+    });
+  });
+
+  // Test endpoint to manually declare result for debugging
+  app.post("/api/test/declare-result", async (req, res) => {
+    try {
+      const { gameName, result } = req.body;
+
+      // Find game by name
+      const Game = (await import("./models/Game")).default;
+      const Bet = (await import("./models/Bet")).default;
+      const Wallet = (await import("./models/Wallet")).default;
+      const Transaction = (await import("./models/Transaction")).default;
+
+      const game = await Game.findOne({ name: gameName });
+      if (!game) {
+        return res.status(404).json({ message: "Game not found" });
+      }
+
+      // Find pending bets
+      const bets = await Bet.find({
+        gameId: game._id,
+        status: "pending",
+      }).populate("userId", "fullName mobile");
+
+      console.log(`📊 Found ${bets.length} pending bets for ${gameName}`);
+
+      let winnersCount = 0;
+      let totalWinnings = 0;
+
+      // Process each bet
+      for (const bet of bets) {
+        const isWinner = bet.betNumber === result;
+        console.log(
+          `🎲 ${bet.betNumber} === ${result} = ${isWinner ? "WIN" : "LOSE"}`,
+        );
+
+        if (isWinner) {
+          bet.isWinner = true;
+          bet.winningAmount = bet.potentialWinning;
+          bet.status = "won";
+          winnersCount++;
+          totalWinnings += bet.winningAmount;
+
+          // Credit wallet
+          const wallet = await Wallet.findOne({ userId: bet.userId });
+          if (wallet) {
+            wallet.winningBalance += bet.winningAmount;
+            await wallet.save();
+            console.log(
+              `💰 Credited ₹${bet.winningAmount} to user ${bet.userId}`,
+            );
+          }
+        } else {
+          bet.status = "lost";
+        }
+
+        await bet.save();
+      }
+
+      res.json({
+        success: true,
+        message: `Result declared for ${gameName}`,
+        data: {
+          result,
+          totalBets: bets.length,
+          winnersCount,
+          totalWinnings,
+        },
+      });
+    } catch (error) {
+      console.error("Test result error:", error);
+      res.status(500).json({ message: "Error declaring result" });
+    }
+  });
 
   // Support Ticket routes
   app.get("/api/support/tickets", auth, getUserTickets);

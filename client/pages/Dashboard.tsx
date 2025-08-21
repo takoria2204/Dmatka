@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -12,11 +13,56 @@ import {
   Dice1,
   Dice6,
   MessageSquare,
+  Target,
+  RefreshCw,
 } from "lucide-react";
+
+interface WalletData {
+  balance: number;
+  winningBalance: number;
+  depositBalance: number;
+  bonusBalance: number;
+  commissionBalance: number;
+  totalDeposits: number;
+  totalWithdrawals: number;
+  totalWinnings: number;
+  totalBets: number;
+}
 
 const Dashboard = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [walletData, setWalletData] = useState<WalletData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchWalletData();
+    }
+  }, [user]);
+
+  const fetchWalletData = async () => {
+    try {
+      const token = localStorage.getItem("matka_token");
+      if (!token) {
+        navigate("/login");
+        return;
+      }
+
+      const response = await fetch("/api/wallet/balance", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setWalletData(data.data);
+      }
+    } catch (error) {
+      console.error("Error fetching wallet data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const gameTypes = [
     {
@@ -75,15 +121,29 @@ const Dashboard = () => {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={logout}
-              variant="outline"
-              size="sm"
-              className="border-border text-foreground hover:bg-muted"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={fetchWalletData}
+                variant="outline"
+                size="sm"
+                disabled={loading}
+                className="border-border text-foreground hover:bg-muted"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+              <Button
+                onClick={logout}
+                variant="outline"
+                size="sm"
+                className="border-border text-foreground hover:bg-muted"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -99,9 +159,15 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-sm">
-                    Wallet Balance
+                    Deposit Balance
                   </p>
-                  <p className="text-foreground font-bold text-lg">₹0.00</p>
+                  <div className="text-foreground font-bold text-lg">
+                    {loading ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-matka-gold border-t-transparent rounded-full"></div>
+                    ) : (
+                      `₹${walletData?.depositBalance?.toLocaleString() || 0}`
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -115,9 +181,15 @@ const Dashboard = () => {
                 </div>
                 <div>
                   <p className="text-muted-foreground text-sm">
-                    Total Winnings
+                    Winning Balance
                   </p>
-                  <p className="text-foreground font-bold text-lg">₹0.00</p>
+                  <div className="text-foreground font-bold text-lg">
+                    {loading ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full"></div>
+                    ) : (
+                      `₹${walletData?.winningBalance?.toLocaleString() || 0}`
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -130,8 +202,14 @@ const Dashboard = () => {
                   <Trophy className="h-5 w-5 text-blue-500" />
                 </div>
                 <div>
-                  <p className="text-muted-foreground text-sm">Games Played</p>
-                  <p className="text-foreground font-bold text-lg">0</p>
+                  <p className="text-muted-foreground text-sm">Total Balance</p>
+                  <div className="text-foreground font-bold text-lg">
+                    {loading ? (
+                      <div className="animate-spin w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                    ) : (
+                      `₹${walletData?.balance?.toLocaleString() || 0}`
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -237,12 +315,13 @@ const Dashboard = () => {
             <User className="h-5 w-5 text-matka-gold" />
             Quick Actions
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             {[
+              { name: "Play Games", route: "/games", icon: Trophy },
               { name: "Add Money", route: "/add-money", icon: Wallet },
               { name: "Withdraw", route: "/withdraw", icon: TrendingUp },
-              { name: "Charts", route: "/charts", icon: Trophy },
               { name: "Wallet", route: "/wallet", icon: User },
+              { name: "My Bets", route: "/my-bets", icon: Target },
               { name: "Support", route: "/support", icon: MessageSquare },
             ].map((action, index) => (
               <Card
